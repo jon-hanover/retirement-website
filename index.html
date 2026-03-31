@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retirement Wealth Planner</title>
+    <title>Grace and Jon Retirement Planning</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -134,8 +134,7 @@
             border-radius: 10px;
             padding: 7px 13px 8px;
             text-align: center;
-            min-width: 108px;
-            white-space: nowrap;
+            width: 114px;
         }
 
         .eb-title {
@@ -210,7 +209,7 @@
 <body>
 
 <div class="container">
-    <h1>Wealth Planning</h1>
+    <h1>Grace and Jon Retirement Planning</h1>
 
     <!-- Row 1: Numeric inputs -->
     <div class="controls">
@@ -231,17 +230,17 @@
     <!-- Row 2: Sliders -->
     <div class="controls" style="margin-bottom: 28px;">
         <div class="control-group">
-            <label for="savingsRate">Savings Rate (pre-retirement)</label>
+            <label for="savingsRate">Savings Rate</label>
             <div class="slider-wrap">
                 <input type="range" id="savingsRate" min="0" max="80" value="20" step="1">
                 <span class="slider-value" id="savingsRateVal">20%</span>
             </div>
         </div>
         <div class="control-group">
-            <label for="retireAge">Target Retirement Age</label>
+            <label for="retireAge">Retirement Age</label>
             <div class="slider-wrap">
                 <input type="range" id="retireAge" min="45" max="80" value="65" step="1">
-                <span class="slider-value" id="retireAgeVal">Ave. Age 65<span class="sub" id="retireYearHint">(Year 2053)</span></span>
+                <span class="slider-value" id="retireAgeVal">65 ave.<span class="sub" id="retireYearHint">(Year 2053)</span></span>
             </div>
         </div>
         <div class="control-group">
@@ -268,7 +267,7 @@
             </div>
 
             <div class="event-box" id="depleteBox" style="display:none">
-                <div class="eb-title">Money Runs Out</div>
+                <div class="eb-title">Money Out</div>
                 <div class="eb-year" id="dYear"></div>
                 <div class="eb-row jon-color"   id="dJon"></div>
                 <div class="eb-row grace-color" id="dGrace"></div>
@@ -511,7 +510,7 @@ function compute() {
     // Slider labels
     $('savingsRateVal').textContent = $('savingsRate').value + '%';
     $('returnRateVal').textContent  = parseFloat($('returnRate').value).toFixed(1) + '%';
-    $('retireAgeVal').childNodes[0].textContent = 'Age ' + retireAge;
+    $('retireAgeVal').childNodes[0].textContent = retireAge + ' ave.';
     $('retireYearHint').textContent = '(Year ' + retireYear + ')';
 
     // Build projection
@@ -560,7 +559,7 @@ function compute() {
     $('rYear').textContent  = retireYear;
     $('rJon').textContent   = 'Jon  '   + ra.jon;
     $('rGrace').textContent = 'Grace  ' + ra.grace;
-    $('rAvg').textContent   = 'Avg  '   + ra.avg;
+    $('rAvg').textContent   = 'Avg  '   + retireAge; // use slider value directly — no rounding drift
 
     if (depletedYear) {
         const da = ages(depletedYear);
