@@ -66,7 +66,7 @@
             margin-bottom: 10px;
         }
 
-        input[type="number"] {
+        input[type="text"] {
             width: 100%;
             padding: 10px 14px;
             border: 1px solid rgba(255,255,255,0.15);
@@ -78,7 +78,7 @@
             outline: none;
             transition: border-color 0.2s;
         }
-        input[type="number"]:focus {
+        input[type="text"]:focus {
             border-color: #7b2ff7;
         }
 
@@ -126,28 +126,11 @@
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 18px;
             padding: 24px 24px 16px;
-            position: relative;
         }
 
         .chart-container {
             position: relative;
             height: 420px;
-        }
-
-        .axis-legend {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-            margin-top: 10px;
-            font-size: 0.78rem;
-        }
-        .axis-legend span {
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .dot {
-            width: 10px; height: 10px; border-radius: 50%; display: inline-block;
         }
 
         .summary {
@@ -174,7 +157,6 @@
         .blue  { color: #60a5fa; }
         .amber { color: #fbbf24; }
         .red   { color: #f87171; }
-        .pink  { color: #f9a8d4; }
 
         @media (max-width: 600px) {
             body { padding: 14px; }
@@ -193,26 +175,26 @@
     <div class="controls">
         <div class="control-group">
             <label for="netWorth">Current Net Worth ($)</label>
-            <input type="number" id="netWorth" value="1000000" step="50000" min="0">
+            <input type="text" id="netWorth" value="1,000,000">
         </div>
 
         <div class="control-group">
             <label for="income">Annual Income ($)</label>
-            <input type="number" id="income" value="250000" step="10000" min="0">
+            <input type="text" id="income" value="250,000">
         </div>
 
         <div class="control-group">
             <label for="returnRate">Annual Return, Net of Inflation (%)</label>
-            <input type="number" id="returnRate" value="4" step="0.5" min="0" max="20">
+            <input type="text" id="returnRate" value="3">
         </div>
 
         <div class="control-group">
             <label for="retirementSpending">Annual Spending in Retirement ($)</label>
-            <input type="number" id="retirementSpending" value="150000" step="5000" min="0">
+            <input type="text" id="retirementSpending" value="150,000">
         </div>
 
         <div class="control-group">
-            <label for="savingsRate">Savings Rate</label>
+            <label for="savingsRate">Savings Rate (pre-retirement)</label>
             <div class="slider-wrap">
                 <input type="range" id="savingsRate" min="0" max="80" value="20" step="1">
                 <span class="slider-value" id="savingsRateVal">20%</span>
@@ -232,11 +214,6 @@
         <div class="chart-container">
             <canvas id="chart"></canvas>
         </div>
-        <div class="axis-legend">
-            <span><span class="dot" style="background:#60a5fa"></span> Jon's age</span>
-            <span><span class="dot" style="background:#f9a8d4"></span> Grace's age</span>
-            <span><span class="dot" style="background:#a78bfa"></span> Average age</span>
-        </div>
         <div class="summary" id="summary"></div>
     </div>
 </div>
@@ -245,11 +222,10 @@
 const $ = id => document.getElementById(id);
 
 const START_YEAR = 2026;
-const END_YEAR   = 2088;
+const END_YEAR   = 2100;
 const JON_AGE_2026   = 40;
 const GRACE_AGE_2026 = 37;
 
-// Ages for a given year
 function ages(year) {
     const d = year - START_YEAR;
     const jon   = JON_AGE_2026 + d;
@@ -258,14 +234,42 @@ function ages(year) {
     return { jon, grace, avg };
 }
 
-// Average age → retirement year
 function ageToYear(age) {
-    // avg age in year Y = ceil(38.5 + (Y - 2026))
-    // Solve: age ≈ 38.5 + (Y - 2026) → Y = round(2026 + age - 38.5)
     return Math.round(START_YEAR + age - 38.5);
 }
 
-// Custom plugin: draws Jon/Grace/Avg age rows below x-axis
+// ── Number input formatting ──────────────────────────────────────────────────
+function parseNum(s) {
+    return parseFloat(String(s).replace(/,/g, '')) || 0;
+}
+function formatNum(n) {
+    const v = parseNum(n);
+    return isNaN(v) ? '' : v.toLocaleString('en-US');
+}
+
+const numberInputIds = ['netWorth', 'income', 'returnRate', 'retirementSpending'];
+numberInputIds.forEach(id => {
+    const el = $(id);
+    el.addEventListener('focus', function() {
+        this.value = String(parseNum(this.value) || '');
+    });
+    el.addEventListener('blur', function() {
+        const n = parseNum(this.value);
+        if (n > 0) this.value = formatNum(n);
+        compute();
+    });
+    el.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') this.blur();
+    });
+});
+
+// ── Tick years for x-axis: 2026, then every 5 from 2030 to 2100 ─────────────
+const tickYears = [START_YEAR];
+for (let y = 2030; y <= END_YEAR; y += 5) tickYears.push(y);
+
+// ── Age axis plugin ──────────────────────────────────────────────────────────
+const ROW_H = 17; // px between age rows
+
 const ageAxisPlugin = {
     id: 'ageAxis',
     afterDraw(chart) {
@@ -273,60 +277,61 @@ const ageAxisPlugin = {
         if (!x) return;
 
         ctx.save();
-        ctx.textAlign = 'center';
+        ctx.textAlign  = 'center';
         ctx.textBaseline = 'top';
+        ctx.font = '10px system-ui, sans-serif';
 
-        // Tick years we want to label (every 5)
-        const tickYears = [];
-        for (let y = START_YEAR; y <= END_YEAR; y += 5) tickYears.push(y);
-
-        const baseY = x.bottom + 4;
-        const rowH  = 13;
+        const baseY = x.bottom + 6;
 
         tickYears.forEach(year => {
             const xPos = x.getPixelForValue(year);
             const { jon, grace, avg } = ages(year);
 
-            ctx.font = '10px system-ui, sans-serif';
-
             ctx.fillStyle = '#60a5fa';
-            ctx.fillText(jon, xPos, baseY);
+            ctx.fillText(jon,   xPos, baseY);
 
             ctx.fillStyle = '#f9a8d4';
-            ctx.fillText(grace, xPos, baseY + rowH);
+            ctx.fillText(grace, xPos, baseY + ROW_H);
+
+            // Separator line above avg row
+            ctx.strokeStyle = 'rgba(167,139,250,0.25)';
+            ctx.lineWidth = 0.75;
+            ctx.beginPath();
+            ctx.moveTo(x.left,  baseY + ROW_H * 2 - 3);
+            ctx.lineTo(x.right, baseY + ROW_H * 2 - 3);
+            ctx.stroke();
 
             ctx.fillStyle = '#a78bfa';
-            ctx.fillText(avg, xPos, baseY + rowH * 2);
+            ctx.fillText(avg,   xPos, baseY + ROW_H * 2);
         });
 
-        // Row labels on the left
+        // Row labels on the left edge
         const labelX = x.left - 6;
         ctx.textAlign = 'right';
         ctx.font = '9px system-ui, sans-serif';
         ctx.fillStyle = '#60a5fa';
-        ctx.fillText('Jon', labelX, baseY);
+        ctx.fillText('Jon',   labelX, baseY);
         ctx.fillStyle = '#f9a8d4';
-        ctx.fillText('Grace', labelX, baseY + rowH);
+        ctx.fillText('Grace', labelX, baseY + ROW_H);
         ctx.fillStyle = '#a78bfa';
-        ctx.fillText('Avg', labelX, baseY + rowH * 2);
+        ctx.fillText('Avg',   labelX, baseY + ROW_H * 2);
 
         ctx.restore();
     }
 };
 
-// Retirement year marker plugin
+// ── Retirement line plugin ───────────────────────────────────────────────────
 const retireLinePlugin = {
     id: 'retireLine',
     afterDraw(chart) {
-        const { ctx, scales: { x, y }, data } = chart;
+        const { ctx, scales: { x, y } } = chart;
         if (!x || !chart._retireYear) return;
-
         const xPos = x.getPixelForValue(chart._retireYear);
         if (xPos < x.left || xPos > x.right) return;
 
         ctx.save();
         ctx.setLineDash([6, 4]);
-        ctx.strokeStyle = 'rgba(251, 191, 36, 0.6)';
+        ctx.strokeStyle = 'rgba(251,191,36,0.6)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(xPos, y.top);
@@ -334,7 +339,7 @@ const retireLinePlugin = {
         ctx.stroke();
 
         ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(251, 191, 36, 0.85)';
+        ctx.fillStyle = 'rgba(251,191,36,0.85)';
         ctx.font = 'bold 11px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
@@ -343,34 +348,18 @@ const retireLinePlugin = {
     }
 };
 
-// Build full year array (fixed x-axis)
-const allYears = [];
-for (let y = START_YEAR; y <= END_YEAR; y++) allYears.push(y);
-
-// Chart setup
+// ── Chart setup ──────────────────────────────────────────────────────────────
 const canvasEl = $('chart');
 const ctx = canvasEl.getContext('2d');
 
 const chart = new Chart(ctx, {
     type: 'line',
     plugins: [ageAxisPlugin, retireLinePlugin],
-    data: {
-        datasets: [{
-            label: 'Net Worth',
-            data: [],
-            borderColor: '#7b2ff7',
-            backgroundColor: 'transparent',
-            pointRadius: 0,
-            pointHitRadius: 8,
-            borderWidth: 3,
-            tension: 0.3,
-            fill: true,
-        }]
-    },
+    data: { datasets: [{ label: 'Net Worth', data: [] }] },
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { bottom: 48, left: 10 } },
+        layout: { padding: { bottom: 58, left: 10 } },
         interaction: { intersect: false, mode: 'index' },
         plugins: {
             legend: { display: false },
@@ -389,8 +378,8 @@ const chart = new Chart(ctx, {
                     },
                     label: item => {
                         const v = item.parsed.y;
-                        const sign = v >= 0 ? '$' : '-$';
-                        return sign + Math.abs(v).toLocaleString('en-US', {maximumFractionDigits: 0});
+                        return (v >= 0 ? '$' : '-$') +
+                            Math.abs(v).toLocaleString('en-US', { maximumFractionDigits: 0 });
                     }
                 }
             }
@@ -400,11 +389,13 @@ const chart = new Chart(ctx, {
                 type: 'linear',
                 min: START_YEAR,
                 max: END_YEAR,
+                afterBuildTicks(axis) {
+                    axis.ticks = tickYears.map(v => ({ value: v }));
+                },
                 ticks: {
-                    stepSize: 5,
-                    color: '#8a80b0',
                     maxRotation: 0,
-                    callback: val => (val % 5 === 0) ? val : null,
+                    color: '#8a80b0',
+                    callback: val => val,
                 },
                 grid: { color: 'rgba(255,255,255,0.04)' },
             },
@@ -423,24 +414,24 @@ const chart = new Chart(ctx, {
     }
 });
 
+// ── Compute & render ─────────────────────────────────────────────────────────
 function compute() {
-    const netWorth0    = parseFloat($('netWorth').value)            || 0;
-    const income       = parseFloat($('income').value)              || 0;
-    const returnPct    = (parseFloat($('returnRate').value)         || 0) / 100;
-    const savePct      = (parseFloat($('savingsRate').value)        || 0) / 100;
-    const retireAge    = parseInt($('retireAge').value)             || 60;
-    const retireSpend  = parseFloat($('retirementSpending').value)  || 0;
-    const retireYear   = ageToYear(retireAge);
+    const netWorth0   = parseNum($('netWorth').value);
+    const income      = parseNum($('income').value);
+    const returnPct   = parseNum($('returnRate').value) / 100;
+    const savePct     = parseInt($('savingsRate').value) / 100;
+    const retireAge   = parseInt($('retireAge').value);
+    const retireSpend = parseNum($('retirementSpending').value);
+    const retireYear  = ageToYear(retireAge);
 
-    // Update slider display
+    // Slider labels
     $('savingsRateVal').textContent = $('savingsRate').value + '%';
     $('retireAgeVal').childNodes[0].textContent = 'Age ' + retireAge;
     $('retireYearHint').textContent = '(Year ' + retireYear + ')';
 
     const data = [];
     let nw = netWorth0;
-    let peakNW = nw, peakYear = START_YEAR;
-    let depletedYear = null;
+    let peakNW = nw, peakYear = START_YEAR, depletedYear = null;
 
     for (let y = START_YEAR; y <= END_YEAR; y++) {
         data.push({ x: y, y: Math.round(nw) });
@@ -449,22 +440,29 @@ function compute() {
         if (nw <= 0 && y >= retireYear && !depletedYear) depletedYear = y;
 
         if (y < retireYear) {
+            // Working years: save a portion of income, invest everything
             nw = (nw + income * savePct) * (1 + returnPct);
         } else {
+            // Retirement: no new savings, just spend and invest remainder
             nw = (nw - retireSpend) * (1 + returnPct);
         }
     }
 
-    // Gradient fill
+    // Gradient
     const gradient = ctx.createLinearGradient(0, 0, 0, canvasEl.clientHeight);
     gradient.addColorStop(0, 'rgba(123,47,247,0.28)');
     gradient.addColorStop(1, 'rgba(123,47,247,0.0)');
 
-    chart.data.datasets[0].data = data;
-    chart.data.datasets[0].backgroundColor = gradient;
-    chart.data.datasets[0].segment = {
-        borderColor: seg => seg.p1.parsed.y < 0 ? '#f87171' : '#7b2ff7'
-    };
+    const ds = chart.data.datasets[0];
+    ds.data = data;
+    ds.borderColor = '#7b2ff7';
+    ds.backgroundColor = gradient;
+    ds.fill = true;
+    ds.pointRadius = 0;
+    ds.pointHitRadius = 8;
+    ds.borderWidth = 3;
+    ds.tension = 0.3;
+    ds.segment = { borderColor: seg => seg.p1.parsed.y < 0 ? '#f87171' : '#7b2ff7' };
 
     chart._retireYear = retireYear;
     chart.update('none');
@@ -476,9 +474,9 @@ function compute() {
 
     const fmt = v => {
         const neg = v < 0, a = Math.abs(v);
-        let s = a >= 1e6 ? '$' + (a/1e6).toFixed(1) + 'M'
-              : a >= 1e3 ? '$' + (a/1e3).toFixed(0) + 'K'
-              : '$' + a.toLocaleString();
+        const s = a >= 1e6 ? '$' + (a / 1e6).toFixed(1) + 'M'
+                : a >= 1e3 ? '$' + (a / 1e3).toFixed(0) + 'K'
+                : '$' + a.toLocaleString();
         return neg ? '-' + s : s;
     };
 
@@ -502,8 +500,7 @@ function compute() {
     `;
 }
 
-['netWorth','income','returnRate','retirementSpending','savingsRate','retireAge']
-    .forEach(id => $(id).addEventListener('input', compute));
+['savingsRate', 'retireAge'].forEach(id => $(id).addEventListener('input', compute));
 
 compute();
 </script>
