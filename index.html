@@ -20,17 +20,10 @@
             text-align: center;
             font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: 28px;
             background: linear-gradient(90deg, #00d2ff, #7b2ff7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: #9a8fc2;
-            font-size: 0.95rem;
-            margin-bottom: 28px;
         }
 
         .container { max-width: 1000px; margin: 0 auto; }
@@ -109,7 +102,7 @@
             color: #9a8fc2;
         }
 
-        /* ── Chart card ───────────────────────────────────────── */
+        /* ── Chart card ─────────────────────────────────────────── */
         .chart-wrap {
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.08);
@@ -117,7 +110,7 @@
             padding: 20px 24px 16px;
         }
 
-        /* ── Floating label strip ─────────────────────────────── */
+        /* ── Floating label strip ───────────────────────────────── */
         .label-strip {
             position: relative;
             height: 86px;
@@ -145,7 +138,6 @@
             color: #9a8fc2;
             margin-bottom: 3px;
         }
-
         .eb-year {
             font-size: 17px;
             font-weight: 700;
@@ -153,26 +145,17 @@
             line-height: 1;
             margin-bottom: 5px;
         }
-
-        .eb-row {
-            font-size: 11px;
-            line-height: 1.55;
-        }
-
-        .eb-sep {
-            height: 1px;
-            background: rgba(167,139,250,0.25);
-            margin: 3px 4px;
-        }
+        .eb-row  { font-size: 11px; line-height: 1.55; }
+        .eb-sep  { height: 1px; background: rgba(167,139,250,0.25); margin: 3px 4px; }
 
         .jon-color   { color: #60a5fa; }
         .grace-color { color: #f9a8d4; }
         .avg-color   { color: #a78bfa; }
 
-        /* ── Chart canvas area ────────────────────────────────── */
+        /* ── Chart canvas ───────────────────────────────────────── */
         .chart-container { position: relative; height: 400px; }
 
-        /* ── Summary row ──────────────────────────────────────── */
+        /* ── Summary row ────────────────────────────────────────── */
         .summary {
             display: flex;
             justify-content: center;
@@ -182,7 +165,6 @@
             padding-top: 18px;
             border-top: 1px solid rgba(255,255,255,0.08);
         }
-
         .stat { text-align: center; }
         .stat-value { font-size: 1.5rem; font-weight: 700; }
         .stat-label {
@@ -192,6 +174,39 @@
             letter-spacing: 0.4px;
             margin-top: 2px;
         }
+
+        /* ── Key Assumptions ────────────────────────────────────── */
+        .assumptions {
+            margin-top: 20px;
+            padding: 16px 20px;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 12px;
+        }
+        .assump-title {
+            font-size: 0.70rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: #9a8fc2;
+            margin-bottom: 9px;
+        }
+        .assumptions ul { list-style: none; padding: 0; }
+        .assumptions li {
+            font-size: 0.72rem;
+            color: #6b6490;
+            line-height: 1.65;
+            padding-left: 12px;
+            position: relative;
+        }
+        .assumptions li::before {
+            content: '·';
+            position: absolute;
+            left: 0;
+            color: #9a8fc2;
+        }
+        .assumptions li + li { margin-top: 3px; }
+        .assumptions strong { color: #9a8fc2; font-weight: 600; }
 
         .green { color: #4ade80; }
         .blue  { color: #60a5fa; }
@@ -253,10 +268,7 @@
     </div>
 
     <div class="chart-wrap">
-
-        <!-- Floating label strip — boxes live here, positioned by JS -->
         <div class="label-strip" id="labelStrip">
-
             <div class="event-box" id="retireBox">
                 <div class="eb-title">Retirement</div>
                 <div class="eb-year" id="rYear"></div>
@@ -265,7 +277,6 @@
                 <div class="eb-sep"></div>
                 <div class="eb-row avg-color"   id="rAvg"></div>
             </div>
-
             <div class="event-box" id="depleteBox" style="display:none">
                 <div class="eb-title">Money Out</div>
                 <div class="eb-year" id="dYear"></div>
@@ -274,7 +285,6 @@
                 <div class="eb-sep"></div>
                 <div class="eb-row avg-color"   id="dAvg"></div>
             </div>
-
         </div>
 
         <div class="chart-container">
@@ -283,6 +293,20 @@
 
         <div class="summary" id="summary"></div>
     </div>
+
+    <!-- Key Assumptions -->
+    <div class="assumptions">
+        <div class="assump-title">Key Assumptions</div>
+        <ul>
+            <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. The annual return slider is a real (inflation-adjusted) return — inflation is assumed to be zero in the model because both portfolio values and spending figures are expressed in constant purchasing power.</li>
+            <li><strong>Income taxes (pre-retirement):</strong> <span id="assumpTax">—</span>. Conservative all-in effective rates (federal + ~5% state avg + FICA) by bracket: ≤$50K → 20%, $50–100K → 26%, $100–200K → 32%, $200–400K → 37%, $400–600K → 40%, &gt;$600K → 43%. Savings rate is applied to after-tax income.</li>
+            <li><strong>Taxes in retirement:</strong> Retirement spending input represents desired net (after-tax) spending. No additional tax drag is modeled on portfolio withdrawals, reflecting that a meaningful portion of long-term savings is assumed to be in tax-advantaged accounts (Roth, etc.).</li>
+            <li><strong>Social Security:</strong> $40,000/year combined benefit assumed in today's dollars, beginning at average age 67 (year 2055) — the full retirement age for Jon (b. 1986) and Grace (b. 1989). No SS income is assumed before age 67 regardless of retirement date. This offsets portfolio withdrawals: only the gap between retirement spending and SS is drawn from savings.</li>
+            <li><strong>Cash flow timing:</strong> Half-year convention — savings deposits and retirement withdrawals are assumed to occur mid-year, earning half a year of investment returns. This produces more accurate results than assuming all flows happen at the start or end of the year.</li>
+            <li><strong>Not modeled:</strong> pension income, rental or investment property income, inheritance, healthcare cost increases, or variable spending in retirement. Retirement spending is assumed constant in real terms throughout retirement.</li>
+        </ul>
+    </div>
+
 </div>
 
 <script>
@@ -292,6 +316,10 @@ const START_YEAR     = 2026;
 const END_YEAR       = 2090;
 const JON_AGE_2026   = 40;
 const GRACE_AGE_2026 = 37;
+
+// Social Security: combined $40K/year starting at avg age 67 (year 2055)
+const SS_BENEFIT    = 40000;
+const SS_START_YEAR = 2055;
 
 function ages(year) {
     const d = year - START_YEAR;
@@ -303,6 +331,16 @@ function ages(year) {
 }
 
 function ageToYear(age) { return Math.round(START_YEAR + age - 38.5); }
+
+// ── Progressive effective tax rate (conservative: federal + ~5% state + FICA) ─
+function effectiveTaxRate(income) {
+    if (income <= 50000)  return 0.20;
+    if (income <= 100000) return 0.26;
+    if (income <= 200000) return 0.32;
+    if (income <= 400000) return 0.37;
+    if (income <= 600000) return 0.40;
+    return 0.43;
+}
 
 // ── Number formatting ─────────────────────────────────────────────────────────
 function parseNum(s)  { return parseFloat(String(s).replace(/,/g, '')) || 0; }
@@ -344,7 +382,6 @@ const ageAxisPlugin = {
 
             ctx.fillStyle = '#60a5fa';
             ctx.fillText(jon,   xPos, baseY);
-
             ctx.fillStyle = '#f9a8d4';
             ctx.fillText(grace, xPos, baseY + ROW_H);
 
@@ -476,22 +513,17 @@ const chart = new Chart(ctx, {
 function updateBoxPositions() {
     const x = chart.scales?.x;
     if (!x) return;
-
     const stripW = $('labelStrip').offsetWidth;
 
-    // Retirement box
     const rb   = $('retireBox');
     const retX = x.getPixelForValue(chart._retireYear);
-    const rbHW = rb.offsetWidth / 2;
-    rb.style.left = Math.max(rbHW, Math.min(stripW - rbHW, retX)) + 'px';
+    rb.style.left = Math.max(rb.offsetWidth / 2, Math.min(stripW - rb.offsetWidth / 2, retX)) + 'px';
 
-    // Depletion box
     const db = $('depleteBox');
     if (chart._depletedYearPrecise) {
         db.style.display = '';
         const depX = x.getPixelForValue(chart._depletedYearPrecise);
-        const dbHW = db.offsetWidth / 2;
-        db.style.left = Math.max(dbHW, Math.min(stripW - dbHW, depX)) + 'px';
+        db.style.left = Math.max(db.offsetWidth / 2, Math.min(stripW - db.offsetWidth / 2, depX)) + 'px';
     } else {
         db.style.display = 'none';
     }
@@ -507,11 +539,26 @@ function compute() {
     const retireSpend = parseNum($('retirementSpending').value);
     const retireYear  = ageToYear(retireAge);
 
+    // Tax & savings
+    const taxRate       = effectiveTaxRate(income);
+    const afterTaxInc   = income * (1 - taxRate);
+    const annualSavings = afterTaxInc * savePct;
+
+    // Half-year convention: cash flows at mid-year earn √(1+r) return
+    const sqrtR = Math.pow(1 + returnPct, 0.5);
+
     // Slider labels
     $('savingsRateVal').textContent = $('savingsRate').value + '%';
     $('returnRateVal').textContent  = parseFloat($('returnRate').value).toFixed(1) + '%';
     $('retireAgeVal').childNodes[0].textContent = retireAge + ' ave.';
     $('retireYearHint').textContent = '(Year ' + retireYear + ')';
+
+    // Dynamic assumption note
+    const taxPct = Math.round(taxRate * 100);
+    $('assumpTax').textContent =
+        `At $${formatNum(income)} gross income, a ${taxPct}% effective tax rate is applied` +
+        ` → $${formatNum(Math.round(afterTaxInc))} take-home` +
+        ` → $${formatNum(Math.round(annualSavings))}/yr saved (${$('savingsRate').value}% of take-home)`;
 
     // Build projection
     const data = [];
@@ -521,12 +568,21 @@ function compute() {
         data.push({ x: y, y: Math.round(nw) });
         if (nw > peakNW) { peakNW = nw; peakYear = y; }
         if (nw <= 0 && y >= retireYear && !depletedYear) depletedYear = y;
-        nw = y < retireYear
-            ? (nw + income * savePct) * (1 + returnPct)
-            : (nw - retireSpend)      * (1 + returnPct);
+
+        if (y < retireYear) {
+            // Working year: existing portfolio grows full year;
+            // new savings deposited mid-year earn half a year of returns
+            nw = nw * (1 + returnPct) + annualSavings * sqrtR;
+        } else {
+            // Retirement year: SS offsets spending from age 67 onward;
+            // net withdrawal happens mid-year (half-year convention)
+            const ss      = (y >= SS_START_YEAR) ? SS_BENEFIT : 0;
+            const netDraw = Math.max(0, retireSpend - ss);
+            nw = nw * (1 + returnPct) - netDraw * sqrtR;
+        }
     }
 
-    // Interpolated zero-crossing for line/box alignment
+    // Precise zero-crossing for dashed line alignment
     let depletedYearPrecise = null;
     if (depletedYear !== null && depletedYear > START_YEAR) {
         const d0 = data[depletedYear - 1 - START_YEAR];
@@ -554,12 +610,12 @@ function compute() {
     chart._depletedYearPrecise = depletedYearPrecise;
     chart.update('none');
 
-    // Populate label box content
+    // Populate event boxes
     const ra = ages(retireYear);
     $('rYear').textContent  = retireYear;
     $('rJon').textContent   = 'Jon  '   + ra.jon;
     $('rGrace').textContent = 'Grace  ' + ra.grace;
-    $('rAvg').textContent   = 'Avg  '   + retireAge; // use slider value directly — no rounding drift
+    $('rAvg').textContent   = 'Avg  '   + retireAge;
 
     if (depletedYear) {
         const da = ages(depletedYear);
@@ -574,7 +630,6 @@ function compute() {
     // Summary stats
     const retireNW      = data[Math.min(retireYear - START_YEAR, data.length - 1)]?.y ?? 0;
     const yearsOfWealth = depletedYear ? depletedYear - retireYear : '∞';
-    const depletedAge   = depletedYear ? ages(depletedYear).avg : null;
 
     const fmt = v => {
         const neg = v < 0, a = Math.abs(v);
