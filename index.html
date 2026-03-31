@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grace and Jon Retirement Planning</title>
+    <title>Retirement Planning for Grace and Jon</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -224,7 +224,7 @@
 <body>
 
 <div class="container">
-    <h1>Grace and Jon Retirement Planning</h1>
+    <h1>Retirement Planning for Grace and Jon</h1>
 
     <!-- Row 1: Numeric inputs -->
     <div class="controls">
@@ -300,10 +300,9 @@
         <ul>
             <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. The annual return slider is a real (inflation-adjusted) return — inflation is assumed to be zero in the model because both portfolio values and spending figures are expressed in constant purchasing power.</li>
             <li><strong>Income taxes (pre-retirement):</strong> <span id="assumpTax">—</span>. Conservative all-in effective rates (federal + ~5% state avg + FICA) by bracket: ≤$50K → 20%, $50–100K → 26%, $100–200K → 32%, $200–400K → 37%, $400–600K → 40%, &gt;$600K → 43%. Savings rate is applied to after-tax income.</li>
-            <li><strong>Taxes in retirement:</strong> Retirement spending input represents desired net (after-tax) spending. No additional tax drag is modeled on portfolio withdrawals, reflecting that a meaningful portion of long-term savings is assumed to be in tax-advantaged accounts (Roth, etc.).</li>
-            <li><strong>Social Security:</strong> $40,000/year combined benefit assumed in today's dollars, beginning at average age 67 (year 2055) — the full retirement age for Jon (b. 1986) and Grace (b. 1989). No SS income is assumed before age 67 regardless of retirement date. This offsets portfolio withdrawals: only the gap between retirement spending and SS is drawn from savings.</li>
-            <li><strong>Cash flow timing:</strong> Half-year convention — savings deposits and retirement withdrawals are assumed to occur mid-year, earning half a year of investment returns. This produces more accurate results than assuming all flows happen at the start or end of the year.</li>
-            <li><strong>Not modeled:</strong> pension income, rental or investment property income, inheritance, healthcare cost increases, or variable spending in retirement. Retirement spending is assumed constant in real terms throughout retirement.</li>
+            <li><strong>Taxes in retirement:</strong> An 18% effective rate is applied to taxable retirement income — conservative for a high-wealth couple but lower than working-year rates due to reduced income. 85% of Social Security benefits are treated as taxable (the IRS threshold applies to anyone with combined income above $44K/year, which this couple exceeds). 55% of portfolio withdrawals are treated as taxable, reflecting a realistic mix of traditional IRA/401k (fully taxable ordinary income), taxable brokerage accounts (long-term capital gains), and Roth accounts (tax-free). The retirement spending input is your desired net after-tax spending; the model grosses up portfolio withdrawals accordingly so that amount is actually achieved.</li>
+            <li><strong>Social Security:</strong> $40,000/year combined benefit in today's dollars, beginning at average age 67 (year 2055) — the full retirement age for Jon (b. 1986) and Grace (b. 1989). No SS income assumed before age 67 regardless of retirement date. After SS starts, after-tax SS income reduces the required portfolio withdrawal for the year.</li>
+            <li><strong>Cash flow timing:</strong> Half-year convention — savings deposits and retirement withdrawals are assumed to occur mid-year, earning half a year of investment returns. This produces more accurate results than assuming all flows happen at year-start or year-end.</li>
         </ul>
     </div>
 
@@ -320,6 +319,11 @@ const GRACE_AGE_2026 = 37;
 // Social Security: combined $40K/year starting at avg age 67 (year 2055)
 const SS_BENEFIT    = 40000;
 const SS_START_YEAR = 2055;
+
+// Retirement tax assumptions (conservative for high-wealth couple)
+const RET_TAX_RATE        = 0.18;  // 18% effective rate on taxable retirement income
+const SS_TAXABLE_FRACTION = 0.85;  // 85% of SS benefits taxable at this income level
+const PORT_TAXABLE_FRAC   = 0.55;  // 55% of portfolio draws taxable (mix of trad IRA, Roth, brokerage)
 
 function ages(year) {
     const d = year - START_YEAR;
@@ -570,15 +574,21 @@ function compute() {
         if (nw <= 0 && y >= retireYear && !depletedYear) depletedYear = y;
 
         if (y < retireYear) {
-            // Working year: existing portfolio grows full year;
-            // new savings deposited mid-year earn half a year of returns
+            // Working year: portfolio grows full year; savings deposited mid-year
             nw = nw * (1 + returnPct) + annualSavings * sqrtR;
         } else {
-            // Retirement year: SS offsets spending from age 67 onward;
-            // net withdrawal happens mid-year (half-year convention)
-            const ss      = (y >= SS_START_YEAR) ? SS_BENEFIT : 0;
-            const netDraw = Math.max(0, retireSpend - ss);
-            nw = nw * (1 + returnPct) - netDraw * sqrtR;
+            // Retirement year: gross up portfolio withdrawal to cover taxes,
+            // net of any after-tax SS income received from age 67 onward.
+            //
+            // SS: 85% taxable → after-tax SS = SS × (1 − 0.85 × 18%)
+            // Portfolio: 55% taxable → gross draw = net needed ÷ (1 − 0.55 × 18%)
+            // This ensures the desired net spending is actually achieved.
+            const ssAfterTax    = (y >= SS_START_YEAR)
+                                  ? SS_BENEFIT * (1 - SS_TAXABLE_FRACTION * RET_TAX_RATE)
+                                  : 0;
+            const netFromPort   = Math.max(0, retireSpend - ssAfterTax);
+            const grossFromPort = netFromPort / (1 - PORT_TAXABLE_FRAC * RET_TAX_RATE);
+            nw = nw * (1 + returnPct) - grossFromPort * sqrtR;
         }
     }
 
