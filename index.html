@@ -205,7 +205,7 @@
             <label for="retireAge">Target Retirement Age (avg)</label>
             <div class="slider-wrap">
                 <input type="range" id="retireAge" min="45" max="80" value="60" step="1">
-                <span class="slider-value" id="retireAgeVal">Age 60<span class="year-hint" id="retireYearHint">(Year 2047)</span></span>
+                <span class="slider-value" id="retireAgeVal">Age 60<span class="year-hint" id="retireYearHint">(Year 2048)</span></span>
             </div>
         </div>
     </div>
@@ -320,6 +320,21 @@ const ageAxisPlugin = {
     }
 };
 
+// ── Shared helper: rounded rect path ────────────────────────────────────────
+function roundRect(ctx, x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.lineTo(x + w - r, y);
+    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+    ctx.lineTo(x + w, y + h - r);
+    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+    ctx.lineTo(x + r, y + h);
+    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+    ctx.lineTo(x, y + r);
+    ctx.quadraticCurveTo(x, y, x + r, y);
+    ctx.closePath();
+}
+
 // ── Retirement line plugin ───────────────────────────────────────────────────
 const retireLinePlugin = {
     id: 'retireLine',
@@ -338,12 +353,78 @@ const retireLinePlugin = {
         ctx.lineTo(xPos, y.bottom);
         ctx.stroke();
 
+        // Label pill — drawn inside the chart area so it's never clipped
         ctx.setLineDash([]);
-        ctx.fillStyle = 'rgba(251,191,36,0.85)';
         ctx.font = 'bold 11px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('Retirement', xPos, y.top - 2);
+        ctx.textBaseline = 'middle';
+        const text = 'Retirement';
+        const tw = ctx.measureText(text).width;
+        const ph = 18, pw = tw + 16, py = y.top + 6, px = xPos - pw / 2;
+        roundRect(ctx, px, py, pw, ph, 5);
+        ctx.fillStyle = 'rgba(30,20,60,0.8)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(251,191,36,0.7)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(251,191,36,0.95)';
+        ctx.fillText(text, xPos, py + ph / 2);
+        ctx.restore();
+    }
+};
+
+// ── Depletion line plugin ────────────────────────────────────────────────────
+const depletionLinePlugin = {
+    id: 'depletionLine',
+    afterDraw(chart) {
+        const { ctx, scales: { x, y } } = chart;
+        if (!x || !chart._depletedYear) return;
+        const xPos = x.getPixelForValue(chart._depletedYear);
+        if (xPos < x.left || xPos > x.right) return;
+
+        const { jon, grace, avg } = ages(chart._depletedYear);
+
+        ctx.save();
+        ctx.setLineDash([6, 4]);
+        ctx.strokeStyle = 'rgba(248,113,113,0.65)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(xPos, y.top);
+        ctx.lineTo(xPos, y.bottom);
+        ctx.stroke();
+
+        // Bubble with year + ages
+        ctx.setLineDash([]);
+        ctx.font = 'bold 11px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        const lines = [
+            String(chart._depletedYear),
+            `Jon ${jon}  ·  Grace ${grace}`,
+            `Avg age ${avg}`,
+        ];
+
+        const lineH = 16;
+        const pad = 8;
+        const bw = 120;
+        const bh = lines.length * lineH + pad * 2;
+        const bx = xPos - bw / 2;
+        const by = y.top + 6;
+
+        roundRect(ctx, bx, by, bw, bh, 6);
+        ctx.fillStyle = 'rgba(30,20,60,0.85)';
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(248,113,113,0.65)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = '#f87171';
+        lines.forEach((line, i) => {
+            ctx.font = i === 0 ? 'bold 12px system-ui, sans-serif' : '10px system-ui, sans-serif';
+            ctx.fillText(line, xPos, by + pad + lineH * i + lineH / 2);
+        });
+
         ctx.restore();
     }
 };
@@ -354,12 +435,12 @@ const ctx = canvasEl.getContext('2d');
 
 const chart = new Chart(ctx, {
     type: 'line',
-    plugins: [ageAxisPlugin, retireLinePlugin],
-    data: { datasets: [{ label: 'Net Worth', data: [] }] },
+    plugins: [ageAxisPlugin, retireLinePlugin, depletionLinePlugin],
+    data: { datasets: [{ label: 'Net Worth', data: [], pointRadius: 0, pointHoverRadius: 0 }] },
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { bottom: 58, left: 10 } },
+        layout: { padding: { top: 36, bottom: 58, left: 10 } },
         interaction: { intersect: false, mode: 'index' },
         plugins: {
             legend: { display: false },
@@ -464,7 +545,10 @@ function compute() {
     ds.tension = 0.3;
     ds.segment = { borderColor: seg => seg.p1.parsed.y < 0 ? '#f87171' : '#7b2ff7' };
 
+    ds.pointRadius = 0;
+    ds.pointHoverRadius = 0;
     chart._retireYear = retireYear;
+    chart._depletedYear = depletedYear;
     chart.update('none');
 
     // Summary stats
