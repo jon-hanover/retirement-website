@@ -217,7 +217,7 @@
 const $ = id => document.getElementById(id);
 
 const START_YEAR     = 2026;
-const END_YEAR       = 2077; // avg age 90
+const END_YEAR       = 2090;
 const JON_AGE_2026   = 40;
 const GRACE_AGE_2026 = 37;
 
@@ -253,10 +253,9 @@ function formatNum(n) {
     el.addEventListener('keydown', function(e) { if (e.key === 'Enter') this.blur(); });
 });
 
-// ── Tick years: 2026, then every 5 through END_YEAR ──────────────────────────
+// ── Tick years: evenly spaced every 5 years, 2030–2090, plus 2026 at start ───
 const tickYears = [START_YEAR];
-for (let y = 2030; y < END_YEAR; y += 5) tickYears.push(y);
-tickYears.push(END_YEAR);
+for (let y = 2030; y <= END_YEAR; y += 5) tickYears.push(y);
 
 // ── Shared: rounded rect path ─────────────────────────────────────────────────
 function roundRect(ctx, x, y, w, h, r) {
@@ -484,6 +483,11 @@ const chart = new Chart(ctx, {
                 type: 'linear',
                 min: START_YEAR,
                 max: END_YEAR,
+                // Ticks built once at init; afterBuildTicks overrides every cycle
+                // so we use beforeUpdate to keep them frozen instead
+                beforeUpdate(axis) {
+                    axis.options.ticks.maxTicksLimit = tickYears.length + 1;
+                },
                 afterBuildTicks(axis) {
                     axis.ticks = tickYears.map(v => ({ value: v }));
                 },
