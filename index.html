@@ -20,10 +20,17 @@
             text-align: center;
             font-size: 2rem;
             font-weight: 700;
-            margin-bottom: 28px;
+            margin-bottom: 6px;
             background: linear-gradient(90deg, #00d2ff, #7b2ff7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            font-size: 0.95rem;
+            color: #9a8fc2;
+            margin-bottom: 22px;
         }
 
         .container { max-width: 1000px; margin: 0 auto; }
@@ -115,7 +122,6 @@
             position: relative;
             height: 86px;
             margin-bottom: 6px;
-            pointer-events: none;
         }
 
         .event-box {
@@ -128,7 +134,11 @@
             padding: 7px 13px 8px;
             text-align: center;
             width: 114px;
+            cursor: pointer;
+            z-index: 1;
+            user-select: none;
         }
+        .event-box:hover { border-color: rgba(255,255,255,0.3); }
 
         .eb-title {
             font-size: 9px;
@@ -216,6 +226,7 @@
         @media (max-width: 700px) {
             body { padding: 14px; }
             h1 { font-size: 1.4rem; }
+            .subtitle { font-size: 0.85rem; }
             .controls { grid-template-columns: 1fr; }
             .summary { gap: 18px; }
         }
@@ -224,7 +235,8 @@
 <body>
 
 <div class="container">
-    <h1>Retirement Planning for Grace and Jon</h1>
+    <h1>Retirement Planning</h1>
+    <p class="subtitle">for Grace and Jon</p>
 
     <!-- Row 1: Numeric inputs -->
     <div class="controls">
@@ -368,6 +380,11 @@ for (let y = 2030; y <= END_YEAR; y += 5) tickYears.push(y);
 // ── Age axis plugin ───────────────────────────────────────────────────────────
 const ROW_H = 17;
 
+function visibleTickYears(chartWidth) {
+    if (chartWidth < 500) return tickYears.filter(y => y % 10 === 0);
+    return tickYears;
+}
+
 const ageAxisPlugin = {
     id: 'ageAxis',
     afterDraw(chart) {
@@ -379,8 +396,9 @@ const ageAxisPlugin = {
         ctx.font = '10px system-ui, sans-serif';
 
         const baseY = x.bottom + 6;
+        const ticks = visibleTickYears(chart.width);
 
-        tickYears.forEach(year => {
+        ticks.forEach(year => {
             const xPos = x.getPixelForValue(year);
             const { jon, grace, avg } = ages(year);
 
@@ -494,7 +512,10 @@ const chart = new Chart(ctx, {
                 min: START_YEAR,
                 max: END_YEAR,
                 beforeUpdate(axis) { axis.options.ticks.maxTicksLimit = tickYears.length + 1; },
-                afterBuildTicks(axis) { axis.ticks = tickYears.map(v => ({ value: v })); },
+                afterBuildTicks(axis) {
+                    const ticks = visibleTickYears(axis.chart.width);
+                    axis.ticks = ticks.map(v => ({ value: v }));
+                },
                 ticks: { maxRotation: 0, color: '#8a80b0', callback: val => val },
                 grid:  { color: 'rgba(255,255,255,0.04)' },
             },
@@ -663,6 +684,15 @@ function compute() {
 
 ['savingsRate', 'retireAge', 'returnRate'].forEach(id => $(id).addEventListener('input', compute));
 window.addEventListener('resize', updateBoxPositions);
+
+// Clicking a box brings it in front of the other
+['retireBox', 'depleteBox'].forEach(id => {
+    $(id).addEventListener('click', function() {
+        $('retireBox').style.zIndex = '1';
+        $('depleteBox').style.zIndex = '1';
+        this.style.zIndex = '2';
+    });
+});
 
 compute();
 </script>
