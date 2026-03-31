@@ -33,10 +33,7 @@
             margin-bottom: 28px;
         }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
+        .container { max-width: 1000px; margin: 0 auto; }
 
         .controls {
             display: grid;
@@ -78,11 +75,7 @@
         }
         input[type="text"]:focus { border-color: #7b2ff7; }
 
-        .slider-wrap {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-        }
+        .slider-wrap { display: flex; align-items: center; gap: 14px; }
 
         input[type="range"] {
             flex: 1;
@@ -116,15 +109,71 @@
             color: #9a8fc2;
         }
 
+        /* ── Chart card ───────────────────────────────────────── */
         .chart-wrap {
             background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.08);
             border-radius: 18px;
-            padding: 24px 24px 16px;
+            padding: 20px 24px 16px;
         }
 
-        .chart-container { position: relative; height: 420px; }
+        /* ── Floating label strip ─────────────────────────────── */
+        .label-strip {
+            position: relative;
+            height: 86px;
+            margin-bottom: 6px;
+            pointer-events: none;
+        }
 
+        .event-box {
+            position: absolute;
+            top: 0;
+            transform: translateX(-50%);
+            background: rgba(14, 10, 40, 0.88);
+            border: 1px solid rgba(255,255,255,0.14);
+            border-radius: 10px;
+            padding: 7px 13px 8px;
+            text-align: center;
+            min-width: 108px;
+            white-space: nowrap;
+        }
+
+        .eb-title {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #9a8fc2;
+            margin-bottom: 3px;
+        }
+
+        .eb-year {
+            font-size: 17px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .eb-row {
+            font-size: 11px;
+            line-height: 1.55;
+        }
+
+        .eb-sep {
+            height: 1px;
+            background: rgba(167,139,250,0.25);
+            margin: 3px 4px;
+        }
+
+        .jon-color   { color: #60a5fa; }
+        .grace-color { color: #f9a8d4; }
+        .avg-color   { color: #a78bfa; }
+
+        /* ── Chart canvas area ────────────────────────────────── */
+        .chart-container { position: relative; height: 400px; }
+
+        /* ── Summary row ──────────────────────────────────────── */
         .summary {
             display: flex;
             justify-content: center;
@@ -161,8 +210,7 @@
 <body>
 
 <div class="container">
-    <h1>Retirement Wealth Planner</h1>
-    <p class="subtitle">All returns shown net of inflation &mdash; adjust inputs and watch your projection update in real time.</p>
+    <h1>Wealth Planning</h1>
 
     <!-- Row 1: Numeric inputs -->
     <div class="controls">
@@ -206,9 +254,34 @@
     </div>
 
     <div class="chart-wrap">
+
+        <!-- Floating label strip — boxes live here, positioned by JS -->
+        <div class="label-strip" id="labelStrip">
+
+            <div class="event-box" id="retireBox">
+                <div class="eb-title">Retirement</div>
+                <div class="eb-year" id="rYear"></div>
+                <div class="eb-row jon-color"   id="rJon"></div>
+                <div class="eb-row grace-color" id="rGrace"></div>
+                <div class="eb-sep"></div>
+                <div class="eb-row avg-color"   id="rAvg"></div>
+            </div>
+
+            <div class="event-box" id="depleteBox" style="display:none">
+                <div class="eb-title">Money Runs Out</div>
+                <div class="eb-year" id="dYear"></div>
+                <div class="eb-row jon-color"   id="dJon"></div>
+                <div class="eb-row grace-color" id="dGrace"></div>
+                <div class="eb-sep"></div>
+                <div class="eb-row avg-color"   id="dAvg"></div>
+            </div>
+
+        </div>
+
         <div class="chart-container">
             <canvas id="chart"></canvas>
         </div>
+
         <div class="summary" id="summary"></div>
     </div>
 </div>
@@ -223,24 +296,18 @@ const GRACE_AGE_2026 = 37;
 
 function ages(year) {
     const d = year - START_YEAR;
-    const jon   = JON_AGE_2026 + d;
-    const grace = GRACE_AGE_2026 + d;
-    const avg   = Math.ceil((jon + grace) / 2);
-    return { jon, grace, avg };
+    return {
+        jon:   JON_AGE_2026   + d,
+        grace: GRACE_AGE_2026 + d,
+        avg:   Math.ceil((JON_AGE_2026 + GRACE_AGE_2026 + d * 2) / 2),
+    };
 }
 
-function ageToYear(age) {
-    return Math.round(START_YEAR + age - 38.5);
-}
+function ageToYear(age) { return Math.round(START_YEAR + age - 38.5); }
 
-// ── Number input formatting ───────────────────────────────────────────────────
-function parseNum(s) {
-    return parseFloat(String(s).replace(/,/g, '')) || 0;
-}
-function formatNum(n) {
-    const v = parseNum(n);
-    return isNaN(v) ? '' : v.toLocaleString('en-US');
-}
+// ── Number formatting ─────────────────────────────────────────────────────────
+function parseNum(s)  { return parseFloat(String(s).replace(/,/g, '')) || 0; }
+function formatNum(n) { const v = parseNum(n); return isNaN(v) ? '' : v.toLocaleString('en-US'); }
 
 ['netWorth', 'income', 'retirementSpending'].forEach(id => {
     const el = $(id);
@@ -250,27 +317,12 @@ function formatNum(n) {
         if (n > 0) this.value = formatNum(n);
         compute();
     });
-    el.addEventListener('keydown', function(e) { if (e.key === 'Enter') this.blur(); });
+    el.addEventListener('keydown', e => { if (e.key === 'Enter') el.blur(); });
 });
 
-// ── Tick years: evenly spaced every 5 years, 2030–2090, plus 2026 at start ───
+// ── Tick years ────────────────────────────────────────────────────────────────
 const tickYears = [START_YEAR];
 for (let y = 2030; y <= END_YEAR; y += 5) tickYears.push(y);
-
-// ── Shared: rounded rect path ─────────────────────────────────────────────────
-function roundRect(ctx, x, y, w, h, r) {
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.lineTo(x + w - r, y);
-    ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-    ctx.lineTo(x + w, y + h - r);
-    ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-    ctx.lineTo(x + r, y + h);
-    ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-    ctx.lineTo(x, y + r);
-    ctx.quadraticCurveTo(x, y, x + r, y);
-    ctx.closePath();
-}
 
 // ── Age axis plugin ───────────────────────────────────────────────────────────
 const ROW_H = 17;
@@ -280,9 +332,8 @@ const ageAxisPlugin = {
     afterDraw(chart) {
         const { ctx, scales: { x, y } } = chart;
         if (!x || !y) return;
-
         ctx.save();
-        ctx.textAlign    = 'center';
+        ctx.textAlign = 'center';
         ctx.textBaseline = 'top';
         ctx.font = '10px system-ui, sans-serif';
 
@@ -298,7 +349,6 @@ const ageAxisPlugin = {
             ctx.fillStyle = '#f9a8d4';
             ctx.fillText(grace, xPos, baseY + ROW_H);
 
-            // Separator line above avg
             ctx.strokeStyle = 'rgba(167,139,250,0.25)';
             ctx.lineWidth = 0.75;
             ctx.beginPath();
@@ -310,19 +360,17 @@ const ageAxisPlugin = {
             ctx.fillText(avg, xPos, baseY + ROW_H * 2);
         });
 
-        // Row labels — drawn well left of the y-axis area
         const labelX = y.left - 8;
         ctx.textAlign = 'right';
         ctx.font = '9px system-ui, sans-serif';
         ctx.fillStyle = '#60a5fa';  ctx.fillText('Jon',   labelX, baseY);
         ctx.fillStyle = '#f9a8d4';  ctx.fillText('Grace', labelX, baseY + ROW_H);
         ctx.fillStyle = '#a78bfa';  ctx.fillText('Avg',   labelX, baseY + ROW_H * 2);
-
         ctx.restore();
     }
 };
 
-// ── Retirement line plugin ────────────────────────────────────────────────────
+// ── Retirement dashed line ────────────────────────────────────────────────────
 const retireLinePlugin = {
     id: 'retireLine',
     afterDraw(chart) {
@@ -330,121 +378,43 @@ const retireLinePlugin = {
         if (!x || !chart._retireYear) return;
         const xPos = x.getPixelForValue(chart._retireYear);
         if (xPos < x.left || xPos > x.right) return;
-
         ctx.save();
         ctx.setLineDash([6, 4]);
-        ctx.strokeStyle = 'rgba(251,191,36,0.6)';
+        ctx.strokeStyle = 'rgba(251,191,36,0.55)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(xPos, y.top);
         ctx.lineTo(xPos, y.bottom);
         ctx.stroke();
-
         ctx.setLineDash([]);
-        ctx.font = 'bold 11px system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        const text = 'Retirement';
-        const tw = ctx.measureText(text).width;
-        const ph = 18, pw = tw + 16;
-        const py = y.top + 6;
-        const px = xPos - pw / 2;
-        roundRect(ctx, px, py, pw, ph, 5);
-        ctx.fillStyle = 'rgba(20,14,50,0.85)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(251,191,36,0.7)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.fillStyle = 'rgba(251,191,36,0.95)';
-        ctx.fillText(text, xPos, py + ph / 2);
         ctx.restore();
     }
 };
 
-// ── Depletion line plugin ─────────────────────────────────────────────────────
+// ── Depletion dashed line ─────────────────────────────────────────────────────
 const depletionLinePlugin = {
     id: 'depletionLine',
     afterDraw(chart) {
         const { ctx, scales: { x, y } } = chart;
         if (!x || !chart._depletedYearPrecise) return;
-
-        // Line at the precise zero-crossing (aligns with chart color change)
         const xPos = x.getPixelForValue(chart._depletedYearPrecise);
         if (xPos < x.left || xPos > x.right) return;
-
         ctx.save();
         ctx.setLineDash([6, 4]);
-        ctx.strokeStyle = 'rgba(248,113,113,0.65)';
+        ctx.strokeStyle = 'rgba(248,113,113,0.55)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(xPos, y.top);
         ctx.lineTo(xPos, y.bottom);
         ctx.stroke();
         ctx.setLineDash([]);
-
-        // Bubble — styled to mirror the age table below
-        const { jon, grace, avg } = ages(chart._depletedYear);
-        const yr = chart._depletedYear;
-
-        const pad   = 9;
-        const lineH = 16;
-        const sepH  = 8;  // gap around separator
-        const bw    = 126;
-        // rows: year header, Jon, Grace, sep, Avg
-        const bh = pad + lineH + lineH + lineH + sepH + lineH + pad;
-        const bx = xPos - bw / 2;
-        const by = y.top + 6;
-
-        roundRect(ctx, bx, by, bw, bh, 6);
-        ctx.fillStyle = 'rgba(20,14,50,0.88)';
-        ctx.fill();
-        ctx.strokeStyle = 'rgba(248,113,113,0.6)';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-
-        let rowY = by + pad + lineH / 2;
-
-        // Year header
-        ctx.font = 'bold 12px system-ui, sans-serif';
-        ctx.fillStyle = '#f87171';
-        ctx.fillText(yr, xPos, rowY);
-        rowY += lineH;
-
-        // Jon
-        ctx.font = '10px system-ui, sans-serif';
-        ctx.fillStyle = '#60a5fa';
-        ctx.fillText(`Jon  ${jon}`, xPos, rowY);
-        rowY += lineH;
-
-        // Grace
-        ctx.fillStyle = '#f9a8d4';
-        ctx.fillText(`Grace  ${grace}`, xPos, rowY);
-        rowY += lineH + sepH / 2;
-
-        // Separator line
-        ctx.strokeStyle = 'rgba(167,139,250,0.3)';
-        ctx.lineWidth = 0.75;
-        ctx.beginPath();
-        ctx.moveTo(bx + 10, rowY);
-        ctx.lineTo(bx + bw - 10, rowY);
-        ctx.stroke();
-        rowY += sepH / 2;
-
-        // Avg
-        ctx.font = '10px system-ui, sans-serif';
-        ctx.fillStyle = '#a78bfa';
-        ctx.fillText(`Avg  ${avg}`, xPos, rowY + lineH / 2);
-
         ctx.restore();
     }
 };
 
 // ── Chart setup ───────────────────────────────────────────────────────────────
 const canvasEl = $('chart');
-const ctx = canvasEl.getContext('2d');
+const ctx      = canvasEl.getContext('2d');
 
 const chart = new Chart(ctx, {
     type: 'line',
@@ -453,7 +423,7 @@ const chart = new Chart(ctx, {
     options: {
         responsive: true,
         maintainAspectRatio: false,
-        layout: { padding: { top: 36, bottom: 60, left: 52 } },
+        layout: { padding: { top: 8, bottom: 60, left: 52 } },
         interaction: { intersect: false, mode: 'index' },
         plugins: {
             legend: { display: false },
@@ -483,20 +453,10 @@ const chart = new Chart(ctx, {
                 type: 'linear',
                 min: START_YEAR,
                 max: END_YEAR,
-                // Ticks built once at init; afterBuildTicks overrides every cycle
-                // so we use beforeUpdate to keep them frozen instead
-                beforeUpdate(axis) {
-                    axis.options.ticks.maxTicksLimit = tickYears.length + 1;
-                },
-                afterBuildTicks(axis) {
-                    axis.ticks = tickYears.map(v => ({ value: v }));
-                },
-                ticks: {
-                    maxRotation: 0,
-                    color: '#8a80b0',
-                    callback: val => val,
-                },
-                grid: { color: 'rgba(255,255,255,0.04)' },
+                beforeUpdate(axis) { axis.options.ticks.maxTicksLimit = tickYears.length + 1; },
+                afterBuildTicks(axis) { axis.ticks = tickYears.map(v => ({ value: v })); },
+                ticks: { maxRotation: 0, color: '#8a80b0', callback: val => val },
+                grid:  { color: 'rgba(255,255,255,0.04)' },
             },
             y: {
                 ticks: {
@@ -513,6 +473,31 @@ const chart = new Chart(ctx, {
     }
 });
 
+// ── Position the floating label boxes ────────────────────────────────────────
+function updateBoxPositions() {
+    const x = chart.scales?.x;
+    if (!x) return;
+
+    const stripW = $('labelStrip').offsetWidth;
+
+    // Retirement box
+    const rb   = $('retireBox');
+    const retX = x.getPixelForValue(chart._retireYear);
+    const rbHW = rb.offsetWidth / 2;
+    rb.style.left = Math.max(rbHW, Math.min(stripW - rbHW, retX)) + 'px';
+
+    // Depletion box
+    const db = $('depleteBox');
+    if (chart._depletedYearPrecise) {
+        db.style.display = '';
+        const depX = x.getPixelForValue(chart._depletedYearPrecise);
+        const dbHW = db.offsetWidth / 2;
+        db.style.left = Math.max(dbHW, Math.min(stripW - dbHW, depX)) + 'px';
+    } else {
+        db.style.display = 'none';
+    }
+}
+
 // ── Compute & render ──────────────────────────────────────────────────────────
 function compute() {
     const netWorth0   = parseNum($('netWorth').value);
@@ -523,86 +508,87 @@ function compute() {
     const retireSpend = parseNum($('retirementSpending').value);
     const retireYear  = ageToYear(retireAge);
 
-    // Update slider displays
+    // Slider labels
     $('savingsRateVal').textContent = $('savingsRate').value + '%';
     $('returnRateVal').textContent  = parseFloat($('returnRate').value).toFixed(1) + '%';
     $('retireAgeVal').childNodes[0].textContent = 'Age ' + retireAge;
     $('retireYearHint').textContent = '(Year ' + retireYear + ')';
 
+    // Build projection
     const data = [];
-    let nw = netWorth0;
-    let peakNW = nw, peakYear = START_YEAR, depletedYear = null;
+    let nw = netWorth0, peakNW = nw, peakYear = START_YEAR, depletedYear = null;
 
     for (let y = START_YEAR; y <= END_YEAR; y++) {
         data.push({ x: y, y: Math.round(nw) });
         if (nw > peakNW) { peakNW = nw; peakYear = y; }
         if (nw <= 0 && y >= retireYear && !depletedYear) depletedYear = y;
-
-        if (y < retireYear) {
-            nw = (nw + income * savePct) * (1 + returnPct);
-        } else {
-            nw = (nw - retireSpend) * (1 + returnPct);
-        }
+        nw = y < retireYear
+            ? (nw + income * savePct) * (1 + returnPct)
+            : (nw - retireSpend)      * (1 + returnPct);
     }
 
-    // Interpolate precise zero-crossing so the dashed line aligns with the color change
+    // Interpolated zero-crossing for line/box alignment
     let depletedYearPrecise = null;
     if (depletedYear !== null && depletedYear > START_YEAR) {
         const d0 = data[depletedYear - 1 - START_YEAR];
         const d1 = data[depletedYear - START_YEAR];
-        if (d0 && d1 && d0.y > 0) {
-            depletedYearPrecise = d0.x + d0.y / (d0.y - d1.y);
-        } else {
-            depletedYearPrecise = depletedYear;
-        }
+        depletedYearPrecise = (d0 && d1 && d0.y > 0)
+            ? d0.x + d0.y / (d0.y - d1.y)
+            : depletedYear;
     }
 
-    // Gradient
+    // Gradient fill
     const gradient = ctx.createLinearGradient(0, 0, 0, canvasEl.clientHeight);
     gradient.addColorStop(0, 'rgba(123,47,247,0.28)');
     gradient.addColorStop(1, 'rgba(123,47,247,0.0)');
 
     const ds = chart.data.datasets[0];
-    ds.data             = data;
-    ds.borderColor      = '#7b2ff7';
-    ds.backgroundColor  = gradient;
-    ds.fill             = true;
-    ds.pointRadius      = 0;
-    ds.pointHoverRadius = 0;
-    ds.borderWidth      = 3;
-    ds.tension          = 0.3;
-    ds.segment          = { borderColor: seg => seg.p1.parsed.y < 0 ? '#f87171' : '#7b2ff7' };
+    Object.assign(ds, {
+        data, borderColor: '#7b2ff7', backgroundColor: gradient,
+        fill: true, pointRadius: 0, pointHoverRadius: 0,
+        borderWidth: 3, tension: 0.3,
+        segment: { borderColor: seg => seg.p1.parsed.y < 0 ? '#f87171' : '#7b2ff7' },
+    });
 
-    chart._retireYear           = retireYear;
-    chart._depletedYear         = depletedYear;
-    chart._depletedYearPrecise  = depletedYearPrecise;
+    chart._retireYear          = retireYear;
+    chart._depletedYear        = depletedYear;
+    chart._depletedYearPrecise = depletedYearPrecise;
     chart.update('none');
 
+    // Populate label box content
+    const ra = ages(retireYear);
+    $('rYear').textContent  = retireYear;
+    $('rJon').textContent   = 'Jon  '   + ra.jon;
+    $('rGrace').textContent = 'Grace  ' + ra.grace;
+    $('rAvg').textContent   = 'Avg  '   + ra.avg;
+
+    if (depletedYear) {
+        const da = ages(depletedYear);
+        $('dYear').textContent  = depletedYear;
+        $('dJon').textContent   = 'Jon  '   + da.jon;
+        $('dGrace').textContent = 'Grace  ' + da.grace;
+        $('dAvg').textContent   = 'Avg  '   + da.avg;
+    }
+
+    updateBoxPositions();
+
     // Summary stats
-    const retireNW       = data[Math.min(retireYear - START_YEAR, data.length - 1)]?.y ?? 0;
-    const yearsOfWealth  = depletedYear ? depletedYear - retireYear : '∞';
-    const depletedAge    = depletedYear ? ages(depletedYear).avg : null;
+    const retireNW      = data[Math.min(retireYear - START_YEAR, data.length - 1)]?.y ?? 0;
+    const yearsOfWealth = depletedYear ? depletedYear - retireYear : '∞';
+    const depletedAge   = depletedYear ? ages(depletedYear).avg : null;
 
     const fmt = v => {
         const neg = v < 0, a = Math.abs(v);
-        const s = a >= 1e6 ? '$' + (a / 1e6).toFixed(1) + 'M'
-                : a >= 1e3 ? '$' + (a / 1e3).toFixed(0) + 'K'
+        const s = a >= 1e6 ? '$' + (a/1e6).toFixed(1) + 'M'
+                : a >= 1e3 ? '$' + (a/1e3).toFixed(0) + 'K'
                 : '$' + a.toLocaleString();
         return neg ? '-' + s : s;
     };
 
     $('summary').innerHTML = `
         <div class="stat">
-            <div class="stat-value green">${fmt(peakNW)}</div>
-            <div class="stat-label">Peak Net Worth (${peakYear})</div>
-        </div>
-        <div class="stat">
             <div class="stat-value blue">${fmt(retireNW)}</div>
             <div class="stat-label">Net Worth at Retirement</div>
-        </div>
-        <div class="stat">
-            <div class="stat-value ${depletedYear ? 'red' : 'green'}">${depletedYear ? depletedYear + ' (avg age ' + depletedAge + ')' : 'Never'}</div>
-            <div class="stat-label">Money Runs Out</div>
         </div>
         <div class="stat">
             <div class="stat-value amber">${yearsOfWealth === '∞' ? '∞' : yearsOfWealth + ' yrs'}</div>
@@ -612,6 +598,7 @@ function compute() {
 }
 
 ['savingsRate', 'retireAge', 'returnRate'].forEach(id => $(id).addEventListener('input', compute));
+window.addEventListener('resize', updateBoxPositions);
 
 compute();
 </script>
