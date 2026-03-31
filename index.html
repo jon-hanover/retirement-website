@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Retirement Wealth Planner</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            color: #e0e0e0;
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+            background: linear-gradient(90deg, #00d2ff, #7b2ff7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #9a8fc2;
+            font-size: 0.95rem;
+            margin-bottom: 28px;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin-bottom: 28px;
+        }
+
+        .control-group {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 14px;
+            padding: 18px 20px;
+            transition: border-color 0.2s;
+        }
+        .control-group:hover {
+            border-color: rgba(123, 47, 247, 0.4);
+        }
+
+        label {
+            display: block;
+            font-size: 0.82rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #b0a8d0;
+            margin-bottom: 10px;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 10px;
+            background: rgba(0,0,0,0.3);
+            color: #fff;
+            font-size: 1.1rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        input[type="number"]:focus {
+            border-color: #7b2ff7;
+        }
+
+        .slider-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        input[type="range"] {
+            flex: 1;
+            -webkit-appearance: none;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255,255,255,0.12);
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #00d2ff, #7b2ff7);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(123,47,247,0.4);
+        }
+
+        .slider-value {
+            min-width: 56px;
+            text-align: right;
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #fff;
+        }
+
+        .chart-wrap {
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 18px;
+            padding: 24px;
+            position: relative;
+        }
+
+        canvas {
+            width: 100% !important;
+            max-height: 420px;
+        }
+
+        .summary {
+            display: flex;
+            justify-content: center;
+            gap: 32px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 18px;
+            border-top: 1px solid rgba(255,255,255,0.08);
+        }
+
+        .stat {
+            text-align: center;
+        }
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        .stat-label {
+            font-size: 0.78rem;
+            color: #9a8fc2;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-top: 2px;
+        }
+
+        .green { color: #4ade80; }
+        .blue  { color: #60a5fa; }
+        .amber { color: #fbbf24; }
+        .red   { color: #f87171; }
+
+        @media (max-width: 600px) {
+            body { padding: 14px; }
+            h1 { font-size: 1.4rem; }
+            .controls { grid-template-columns: 1fr; }
+            .summary { gap: 18px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Retirement Wealth Planner</h1>
+    <p class="subtitle">Adjust the inputs below and watch your projected net worth update in real time.</p>
+
+    <div class="controls">
+        <div class="control-group">
+            <label for="netWorth">Current Net Worth ($)</label>
+            <input type="number" id="netWorth" value="250000" step="10000" min="0">
+        </div>
+
+        <div class="control-group">
+            <label for="income">Annual Income ($)</label>
+            <input type="number" id="income" value="120000" step="5000" min="0">
+        </div>
+
+        <div class="control-group">
+            <label for="returnRate">Annual Investment Return (%)</label>
+            <input type="number" id="returnRate" value="7" step="0.5" min="0" max="30">
+        </div>
+
+        <div class="control-group">
+            <label for="retirementSpending">Annual Spending in Retirement ($)</label>
+            <input type="number" id="retirementSpending" value="80000" step="5000" min="0">
+        </div>
+
+        <div class="control-group">
+            <label for="savingsRate">Savings Rate</label>
+            <div class="slider-wrap">
+                <input type="range" id="savingsRate" min="0" max="80" value="25" step="1">
+                <span class="slider-value" id="savingsRateVal">25%</span>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <label for="retireYear">Target Retirement Year</label>
+            <div class="slider-wrap">
+                <input type="range" id="retireYear" min="2026" max="2065" value="2045" step="1">
+                <span class="slider-value" id="retireYearVal">2045</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="chart-wrap">
+        <canvas id="chart"></canvas>
+        <div class="summary" id="summary"></div>
+    </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+const inputs = {
+    netWorth:          $('netWorth'),
+    income:            $('income'),
+    returnRate:        $('returnRate'),
+    retirementSpending:$('retirementSpending'),
+    savingsRate:       $('savingsRate'),
+    retireYear:        $('retireYear'),
+};
+
+const START_YEAR = 2026;
+
+// Chart setup
+const ctx = $('chart').getContext('2d');
+const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: [],
+        datasets: [{
+            label: 'Net Worth',
+            data: [],
+            borderColor: '#7b2ff7',
+            backgroundColor: 'transparent',
+            pointRadius: 0,
+            pointHitRadius: 8,
+            borderWidth: 3,
+            tension: 0.3,
+            fill: true,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { intersect: false, mode: 'index' },
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: 'rgba(30,20,60,0.92)',
+                titleColor: '#b0a8d0',
+                bodyColor: '#fff',
+                bodyFont: { size: 14, weight: '600' },
+                padding: 12,
+                cornerRadius: 10,
+                callbacks: {
+                    label: ctx => {
+                        const v = ctx.parsed.y;
+                        return (v >= 0 ? '$' : '-$') + Math.abs(v).toLocaleString('en-US', {maximumFractionDigits:0});
+                    }
+                }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: '#8a80b0', maxTicksLimit: 15 },
+                grid: { color: 'rgba(255,255,255,0.04)' },
+            },
+            y: {
+                ticks: {
+                    color: '#8a80b0',
+                    callback: v => {
+                        if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(1) + 'M';
+                        if (Math.abs(v) >= 1e3) return (v/1e3).toFixed(0) + 'K';
+                        return v;
+                    }
+                },
+                grid: { color: 'rgba(255,255,255,0.04)' },
+            }
+        }
+    }
+});
+
+function compute() {
+    const netWorth0   = parseFloat(inputs.netWorth.value) || 0;
+    const income      = parseFloat(inputs.income.value) || 0;
+    const returnPct   = (parseFloat(inputs.returnRate.value) || 0) / 100;
+    const savePct     = (parseFloat(inputs.savingsRate.value) || 0) / 100;
+    const retireYear  = parseInt(inputs.retireYear.value) || 2045;
+    const retireSpend = parseFloat(inputs.retirementSpending.value) || 0;
+
+    const years = [];
+    const values = [];
+    let nw = netWorth0;
+    let peakNW = nw;
+    let peakYear = START_YEAR;
+    let depletedYear = null;
+
+    const MAX_YEAR = 2100;
+
+    for (let y = START_YEAR; y <= MAX_YEAR; y++) {
+        years.push(y);
+        values.push(Math.round(nw));
+
+        if (nw > peakNW) { peakNW = nw; peakYear = y; }
+
+        if (nw <= 0 && y > retireYear && !depletedYear) {
+            depletedYear = y;
+        }
+
+        // advance
+        if (y < retireYear) {
+            // working: earn, save, invest
+            const saved = income * savePct;
+            nw = (nw + saved) * (1 + returnPct);
+        } else {
+            // retired: spend, invest remaining
+            nw = (nw - retireSpend) * (1 + returnPct);
+        }
+    }
+
+    // Trim chart: stop 3 years after depletion or at MAX_YEAR
+    let endIdx = years.length;
+    if (depletedYear) {
+        endIdx = Math.min(endIdx, depletedYear - START_YEAR + 4);
+    }
+
+    const trimYears = years.slice(0, endIdx);
+    const trimValues = values.slice(0, endIdx);
+
+    // Gradient fill
+    const gradient = ctx.createLinearGradient(0, 0, 0, ctx.canvas.clientHeight);
+    gradient.addColorStop(0, 'rgba(123, 47, 247, 0.25)');
+    gradient.addColorStop(1, 'rgba(123, 47, 247, 0.0)');
+
+    chart.data.labels = trimYears;
+    chart.data.datasets[0].data = trimValues;
+    chart.data.datasets[0].backgroundColor = gradient;
+    chart.data.datasets[0].fill = true;
+
+    // Color line segments: green while positive, red while negative
+    chart.data.datasets[0].segment = {
+        borderColor: ctx => {
+            return ctx.p1.parsed.y < 0 ? '#f87171' : '#7b2ff7';
+        }
+    };
+
+    // Retirement year annotation via a second dataset (vertical dashed line)
+    if (chart.data.datasets.length === 1) {
+        chart.data.datasets.push({
+            label: 'Retirement',
+            data: [],
+            borderColor: 'rgba(251, 191, 36, 0.5)',
+            borderWidth: 2,
+            borderDash: [6, 4],
+            pointRadius: 0,
+            pointHitRadius: 0,
+            fill: false,
+            tension: 0,
+        });
+    }
+    // Build vertical line data at retirement year
+    const retireIdx = retireYear - START_YEAR;
+    const retireLine = trimYears.map((y, i) => i === retireIdx ? null : undefined);
+    // Actually, let's use a simpler approach — mark with annotation-style points
+    const maxVal = Math.max(...trimValues, 0);
+    const minVal = Math.min(...trimValues, 0);
+    const retireLineData = trimYears.map(y => y === retireYear ? undefined : null);
+    // Vertical line via array
+    const vLineData = trimYears.map(y => {
+        if (y === retireYear) return maxVal * 1.05;
+        return null;
+    });
+    // Simpler: just highlight retirement year point on main dataset
+    chart.data.datasets[0].pointRadius = trimYears.map(y => y === retireYear ? 8 : 0);
+    chart.data.datasets[0].pointBackgroundColor = trimYears.map(y => y === retireYear ? '#fbbf24' : 'transparent');
+    chart.data.datasets[0].pointBorderColor = trimYears.map(y => y === retireYear ? '#fbbf24' : 'transparent');
+
+    // Remove the second dataset if we added it — keep it clean
+    if (chart.data.datasets.length > 1) chart.data.datasets.length = 1;
+
+    chart.update('none');
+
+    // Summary stats
+    const retireNW = values[retireYear - START_YEAR] || 0;
+    const yearsOfWealth = depletedYear ? depletedYear - retireYear : '∞';
+
+    const fmt = v => {
+        const neg = v < 0;
+        const a = Math.abs(v);
+        let s;
+        if (a >= 1e6) s = '$' + (a/1e6).toFixed(1) + 'M';
+        else if (a >= 1e3) s = '$' + (a/1e3).toFixed(0) + 'K';
+        else s = '$' + a.toLocaleString();
+        return neg ? '-' + s : s;
+    };
+
+    $('summary').innerHTML = `
+        <div class="stat"><div class="stat-value green">${fmt(peakNW)}</div><div class="stat-label">Peak Net Worth (${peakYear})</div></div>
+        <div class="stat"><div class="stat-value blue">${fmt(retireNW)}</div><div class="stat-label">Net Worth at Retirement</div></div>
+        <div class="stat"><div class="stat-value ${depletedYear ? 'red' : 'green'}">${depletedYear || 'Never'}</div><div class="stat-label">Money Runs Out</div></div>
+        <div class="stat"><div class="stat-value amber">${yearsOfWealth === '∞' ? '∞' : yearsOfWealth + ' yrs'}</div><div class="stat-label">Years of Retirement Funded</div></div>
+    `;
+}
+
+// Bind events
+Object.values(inputs).forEach(el => {
+    el.addEventListener('input', () => {
+        $('savingsRateVal').textContent = inputs.savingsRate.value + '%';
+        $('retireYearVal').textContent  = inputs.retireYear.value;
+        compute();
+    });
+});
+
+compute();
+</script>
+
+</body>
+</html>
