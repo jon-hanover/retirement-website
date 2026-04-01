@@ -348,7 +348,7 @@
         <div class="assump-title">Notes</div>
         <ul>
             <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. The annual return slider is a real (inflation-adjusted) return — inflation is assumed to be zero in the model because both portfolio values and spending figures are expressed in constant purchasing power.</li>
-<li><strong>Taxes in retirement:</strong> <span id="assumpRetTax">An 18% effective rate</span> is applied to taxable retirement income — conservative for a high-wealth couple but lower than working-year rates due to reduced income. 85% of Social Security benefits are treated as taxable (the IRS threshold applies to anyone with combined income above $44K/year, which this couple exceeds). 55% of portfolio withdrawals are treated as taxable, reflecting a realistic mix of traditional IRA/401k (fully taxable ordinary income), taxable brokerage accounts (long-term capital gains), and Roth accounts (tax-free). The retirement spending input is your desired net after-tax spending; the model grosses up portfolio withdrawals accordingly so that amount is actually achieved.</li>
+            <li><strong>Taxes in retirement:</strong> <span id="assumpRetTax">An 18% effective rate</span> is applied to all retirement income — both Social Security and portfolio withdrawals. This blended rate should reflect the mix of fully taxable income (traditional IRA/401k draws), partially taxable income (Social Security), and tax-free income (Roth). The retirement spending input is your desired net after-tax spending; the model grosses up withdrawals accordingly so that amount is actually achieved.</li>
             <li><strong>Social Security:</strong> <span id="assumpSS">$40,000/year combined benefit in today's dollars, beginning at average age 67 (year 2055)</span> — the full retirement age for Jon (b. 1986) and Grace (b. 1989). No SS income assumed before the configured start age regardless of retirement date. After SS starts, after-tax SS income reduces the required portfolio withdrawal for the year.</li>
             <li><strong>Cash flow timing:</strong> Half-year convention — savings deposits and retirement withdrawals are assumed to occur mid-year, earning half a year of investment returns. This produces more accurate results than assuming all flows happen at year-start or year-end.</li>
         </ul>
@@ -364,9 +364,6 @@ const END_YEAR       = 2090;
 const JON_AGE_2026   = 40;
 const GRACE_AGE_2026 = 37;
 
-// Fixed retirement tax assumptions
-const SS_TAXABLE_FRACTION = 0.85;  // 85% of SS benefits taxable at this income level
-const PORT_TAXABLE_FRAC   = 0.55;  // 55% of portfolio draws taxable (mix of trad IRA, Roth, brokerage)
 
 function ages(year) {
     const d = year - START_YEAR;
@@ -553,7 +550,7 @@ const chart = new Chart(ctx, {
             y: {
                 title: {
                     display: true,
-                    text: 'Net Worth',
+                    text: 'Net Worth (in today\'s $)',
                     color: '#8a80b0',
                     font: { size: 11 },
                 },
@@ -608,6 +605,10 @@ function compute() {
     const ssBenefit   = parseNum($('ssBenefit').value);
 
 
+    // Pre-retirement: tax rate reduces effective return on the portfolio
+    const preRetireReturn = returnPct * (1 - preTaxRate);
+    const sqrtPreR = Math.pow(1 + preRetireReturn, 0.5);
+
     // Half-year convention: cash flows at mid-year earn √(1+r) return
     const sqrtR = Math.pow(1 + returnPct, 0.5);
 
@@ -635,20 +636,18 @@ function compute() {
         if (nw <= 0 && y >= retireYear && !depletedYear) depletedYear = y;
 
         if (y < retireYear) {
-            // Working year: portfolio grows full year; savings deposited mid-year
-            nw = nw * (1 + returnPct) + annualSavings * sqrtR;
+            // Working year: after-tax return applied to portfolio; savings deposited mid-year
+            nw = nw * (1 + preRetireReturn) + annualSavings * sqrtPreR;
         } else {
-            // Retirement year: gross up portfolio withdrawal to cover taxes,
-            // net of any after-tax SS income received from ssStartAge onward.
-            //
-            // SS: 85% taxable → after-tax SS = SS × (1 − 0.85 × retTaxRate)
-            // Portfolio: 55% taxable → gross draw = net needed ÷ (1 − 0.55 × retTaxRate)
-            // This ensures the desired net spending is actually achieved.
+            // Retirement year: retTaxRate applied to all income (SS + portfolio draws).
+            // SS after-tax = SS × (1 − retTaxRate)
+            // Portfolio gross-up: net needed ÷ (1 − retTaxRate)
+            // retTaxRate represents the blended effective rate across all retirement income.
             const ssAfterTax    = (y >= ssStartYear)
-                                  ? ssBenefit * (1 - SS_TAXABLE_FRACTION * retTaxRate)
+                                  ? ssBenefit * (1 - retTaxRate)
                                   : 0;
             const netFromPort   = Math.max(0, retireSpend - ssAfterTax);
-            const grossFromPort = netFromPort / (1 - PORT_TAXABLE_FRAC * retTaxRate);
+            const grossFromPort = netFromPort / (1 - retTaxRate);
             nw = nw * (1 + returnPct) - grossFromPort * sqrtR;
         }
     }
@@ -660,10 +659,10 @@ function compute() {
         for (let y = END_YEAR + 1; y <= 2300; y++) {
             if (extNW <= 0) { extDepletedYear = y; break; }
             const ssAfterTax    = (y >= ssStartYear)
-                                  ? ssBenefit * (1 - SS_TAXABLE_FRACTION * retTaxRate)
+                                  ? ssBenefit * (1 - retTaxRate)
                                   : 0;
             const netFromPort   = Math.max(0, retireSpend - ssAfterTax);
-            const grossFromPort = netFromPort / (1 - PORT_TAXABLE_FRAC * retTaxRate);
+            const grossFromPort = netFromPort / (1 - retTaxRate);
             extNW = extNW * (1 + returnPct) - grossFromPort * sqrtR;
         }
     }
