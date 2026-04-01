@@ -242,7 +242,7 @@
     <div class="controls">
         <div class="control-group">
             <label for="netWorth">Current Net Worth ($)</label>
-            <input type="text" id="netWorth" value="1,000,000">
+            <input type="text" id="netWorth" value="2,000,000">
         </div>
         <div class="control-group">
             <label for="income">Annual Income ($)</label>
@@ -267,14 +267,14 @@
             <label for="retireAge">Retirement Age</label>
             <div class="slider-wrap">
                 <input type="range" id="retireAge" min="45" max="80" value="65" step="1">
-                <span class="slider-value" id="retireAgeVal">65<span class="sub" id="retireYearHint">(ave. 2053)</span></span>
+                <span class="slider-value" id="retireAgeVal">65<span class="sub" id="retireYearHint">(ave.)</span></span>
             </div>
         </div>
         <div class="control-group">
             <label for="returnRate">Annual Return, Net of Inflation</label>
             <div class="slider-wrap">
-                <input type="range" id="returnRate" min="0" max="10" value="3" step="0.5">
-                <span class="slider-value" id="returnRateVal">3.0%</span>
+                <input type="range" id="returnRate" min="0" max="10" value="2.5" step="0.5">
+                <span class="slider-value" id="returnRateVal">2.5%</span>
             </div>
         </div>
     </div>
@@ -609,7 +609,6 @@ function compute() {
     $('savingsRateVal').textContent = $('savingsRate').value + '%';
     $('returnRateVal').textContent  = parseFloat($('returnRate').value).toFixed(1) + '%';
     $('retireAgeVal').childNodes[0].textContent = retireAge;
-    $('retireYearHint').textContent = '(ave. ' + retireYear + ')';
     $('preTaxRateVal').textContent  = $('preTaxRate').value + '%';
     $('retTaxRateVal').textContent  = $('retTaxRate').value + '%';
     $('ssStartAgeVal').childNodes[0].textContent = ssStartAge;
