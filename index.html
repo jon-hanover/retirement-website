@@ -229,7 +229,7 @@
             font-weight: 400;
             text-transform: none;
             letter-spacing: 0;
-            color: #6b6490;
+            color: #7e78b0;
         }
 
         @media (max-width: 700px) {
@@ -247,31 +247,27 @@
     <h1>Retirement Planning</h1>
     <p class="subtitle">for Grace and Jon</p>
 
-    <!-- Row 1: Numeric inputs -->
+    <!-- Row 1: Inputs -->
     <div class="controls">
         <div class="control-group">
-            <label for="netWorth">Current Net Worth ($)</label>
+            <label for="netWorth">Current Net Worth <span class="label-paren">($)</span></label>
             <input type="text" id="netWorth" value="2,000,000">
         </div>
         <div class="control-group">
-            <label for="income">Annual Income ($)</label>
-            <input type="text" id="income" value="250,000">
+            <label for="annualSavings">Annual Retirement Savings <span class="label-paren">($/yr)</span></label>
+            <div class="slider-wrap">
+                <input type="range" id="annualSavings" min="0" max="40000" value="20000" step="1000">
+                <span class="slider-value" id="annualSavingsVal">$20K</span>
+            </div>
         </div>
         <div class="control-group">
-            <label for="retirementSpending">Annual Spending in Retirement ($)</label>
+            <label for="retirementSpending">Annual Spending in Retirement <span class="label-paren">($)</span></label>
             <input type="text" id="retirementSpending" value="150,000">
         </div>
     </div>
 
     <!-- Row 2: Sliders -->
-    <div class="controls" style="margin-bottom: 28px;">
-        <div class="control-group">
-            <label for="savingsRate">Retirement Savings Rate (Post Tax)</label>
-            <div class="slider-wrap">
-                <input type="range" id="savingsRate" min="0" max="80" value="10" step="1">
-                <span class="slider-value" id="savingsRateVal">10%</span>
-            </div>
-        </div>
+    <div class="controls" style="margin-bottom: 28px; grid-template-columns: repeat(2, 1fr);">
         <div class="control-group">
             <label for="retireAge">Retirement Age <span class="label-paren">(average)</span></label>
             <div class="slider-wrap">
@@ -320,13 +316,6 @@
         <div class="assump-title">Configurable Assumptions</div>
         <div class="controls" style="margin-top:12px; margin-bottom:0;">
             <div class="control-group">
-                <label for="preTaxRate">Effective Tax Rate Pre-Retirement</label>
-                <div class="slider-wrap">
-                    <input type="range" id="preTaxRate" min="15" max="50" value="37" step="1">
-                    <span class="slider-value" id="preTaxRateVal">37%</span>
-                </div>
-            </div>
-            <div class="control-group">
                 <label for="retTaxRate">Effective Tax Rate in Retirement</label>
                 <div class="slider-wrap">
                     <input type="range" id="retTaxRate" min="5" max="35" value="18" step="1">
@@ -334,14 +323,14 @@
                 </div>
             </div>
             <div class="control-group">
-                <label for="ssStartAge">Social Security Start Age (avg)</label>
+                <label for="ssStartAge">Social Security Start Age <span class="label-paren">(average)</span></label>
                 <div class="slider-wrap">
                     <input type="range" id="ssStartAge" min="60" max="75" value="70" step="1">
-                    <span class="slider-value" id="ssStartAgeVal">70<span class="sub" id="ssStartYearHint">(Year 2058)</span></span>
+                    <span class="slider-value" id="ssStartAgeVal">70</span>
                 </div>
             </div>
             <div class="control-group">
-                <label for="ssBenefit">Social Security — Combined ($/yr)</label>
+                <label for="ssBenefit">Social Security <span class="label-paren">(combined, $/yr)</span></label>
                 <input type="text" id="ssBenefit" value="40,000">
             </div>
         </div>
@@ -352,8 +341,7 @@
         <div class="assump-title">Notes</div>
         <ul>
             <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. The annual return slider is a real (inflation-adjusted) return — inflation is assumed to be zero in the model because both portfolio values and spending figures are expressed in constant purchasing power.</li>
-            <li><strong>Income taxes (pre-retirement):</strong> <span id="assumpTax">—</span>. The configurable rate overrides bracket-based auto-calculation; reference brackets (federal + ~5% state avg + FICA): ≤$50K → 20%, $50–100K → 26%, $100–200K → 32%, $200–400K → 37%, $400–600K → 40%, &gt;$600K → 43%. Savings rate is applied to after-tax income.</li>
-            <li><strong>Taxes in retirement:</strong> <span id="assumpRetTax">An 18% effective rate</span> is applied to taxable retirement income — conservative for a high-wealth couple but lower than working-year rates due to reduced income. 85% of Social Security benefits are treated as taxable (the IRS threshold applies to anyone with combined income above $44K/year, which this couple exceeds). 55% of portfolio withdrawals are treated as taxable, reflecting a realistic mix of traditional IRA/401k (fully taxable ordinary income), taxable brokerage accounts (long-term capital gains), and Roth accounts (tax-free). The retirement spending input is your desired net after-tax spending; the model grosses up portfolio withdrawals accordingly so that amount is actually achieved.</li>
+<li><strong>Taxes in retirement:</strong> <span id="assumpRetTax">An 18% effective rate</span> is applied to taxable retirement income — conservative for a high-wealth couple but lower than working-year rates due to reduced income. 85% of Social Security benefits are treated as taxable (the IRS threshold applies to anyone with combined income above $44K/year, which this couple exceeds). 55% of portfolio withdrawals are treated as taxable, reflecting a realistic mix of traditional IRA/401k (fully taxable ordinary income), taxable brokerage accounts (long-term capital gains), and Roth accounts (tax-free). The retirement spending input is your desired net after-tax spending; the model grosses up portfolio withdrawals accordingly so that amount is actually achieved.</li>
             <li><strong>Social Security:</strong> <span id="assumpSS">$40,000/year combined benefit in today's dollars, beginning at average age 67 (year 2055)</span> — the full retirement age for Jon (b. 1986) and Grace (b. 1989). No SS income assumed before the configured start age regardless of retirement date. After SS starts, after-tax SS income reduces the required portfolio withdrawal for the year.</li>
             <li><strong>Cash flow timing:</strong> Half-year convention — savings deposits and retirement withdrawals are assumed to occur mid-year, earning half a year of investment returns. This produces more accurate results than assuming all flows happen at year-start or year-end.</li>
         </ul>
@@ -398,7 +386,7 @@ function effectiveTaxRate(income) {
 function parseNum(s)  { return parseFloat(String(s).replace(/,/g, '')) || 0; }
 function formatNum(n) { const v = parseNum(n); return isNaN(v) ? '' : v.toLocaleString('en-US'); }
 
-['netWorth', 'income', 'retirementSpending', 'ssBenefit'].forEach(id => {
+['netWorth', 'retirementSpending', 'ssBenefit'].forEach(id => {
     const el = $(id);
     el.addEventListener('focus', function() { this.value = String(parseNum(this.value) || ''); });
     el.addEventListener('blur',  function() {
@@ -598,43 +586,33 @@ function updateBoxPositions() {
 
 // ── Compute & render ──────────────────────────────────────────────────────────
 function compute() {
-    const netWorth0   = parseNum($('netWorth').value);
-    const income      = parseNum($('income').value);
-    const returnPct   = parseFloat($('returnRate').value) / 100;
-    const savePct     = parseInt($('savingsRate').value) / 100;
-    const retireAge   = parseInt($('retireAge').value);
-    const retireSpend = parseNum($('retirementSpending').value);
-    const retireYear  = ageToYear(retireAge);
+    const netWorth0    = parseNum($('netWorth').value);
+    const annualSavings = parseInt($('annualSavings').value);
+    const returnPct    = parseFloat($('returnRate').value) / 100;
+    const retireAge    = parseInt($('retireAge').value);
+    const retireSpend  = parseNum($('retirementSpending').value);
+    const retireYear   = ageToYear(retireAge);
 
     // Configurable assumptions
-    const preTaxRate  = parseInt($('preTaxRate').value) / 100;
     const retTaxRate  = parseInt($('retTaxRate').value) / 100;
     const ssStartAge  = parseInt($('ssStartAge').value);
     const ssStartYear = ageToYear(ssStartAge);
     const ssBenefit   = parseNum($('ssBenefit').value);
 
-    // Tax & savings
-    const afterTaxInc   = income * (1 - preTaxRate);
-    const annualSavings = afterTaxInc * savePct;
-
     // Half-year convention: cash flows at mid-year earn √(1+r) return
     const sqrtR = Math.pow(1 + returnPct, 0.5);
 
     // Slider labels
-    $('savingsRateVal').textContent = $('savingsRate').value + '%';
-    $('returnRateVal').textContent  = parseFloat($('returnRate').value).toFixed(1) + '%';
-    $('retireAgeVal').childNodes[0].textContent = retireAge;
-    $('preTaxRateVal').textContent  = $('preTaxRate').value + '%';
-    $('retTaxRateVal').textContent  = $('retTaxRate').value + '%';
-    $('ssStartAgeVal').childNodes[0].textContent = ssStartAge;
-    $('ssStartYearHint').textContent = '(Year ' + ssStartYear + ')';
+    const savingsK = annualSavings >= 1000
+        ? '$' + (annualSavings / 1000).toFixed(0) + 'K'
+        : '$' + annualSavings;
+    $('annualSavingsVal').textContent = savingsK;
+    $('returnRateVal').textContent    = parseFloat($('returnRate').value).toFixed(1) + '%';
+    $('retireAgeVal').textContent     = retireAge;
+    $('retTaxRateVal').textContent    = $('retTaxRate').value + '%';
+    $('ssStartAgeVal').textContent    = ssStartAge;
 
     // Dynamic assumption notes
-    const taxPct = Math.round(preTaxRate * 100);
-    $('assumpTax').textContent =
-        `At $${formatNum(income)} gross income, a ${taxPct}% effective tax rate is applied` +
-        ` → $${formatNum(Math.round(afterTaxInc))} take-home` +
-        ` → $${formatNum(Math.round(annualSavings))}/yr saved (${$('savingsRate').value}% of take-home)`;
     $('assumpRetTax').textContent = `A ${$('retTaxRate').value}% effective rate`;
     $('assumpSS').textContent =
         `$${formatNum(ssBenefit)}/year combined benefit in today's dollars, beginning at average age ${ssStartAge} (year ${ssStartYear})`;
@@ -747,9 +725,8 @@ function compute() {
                <div class="stat-label">Money Runs Out</div>
            </div>`
         : (() => {
-              const da = ages(depYear);
               return `<div class="stat">
-                  <div class="stat-value red">${depYear} <span style="font-size:0.85rem;font-weight:400;color:#9a8fc2">ave age ${da.avg}</span></div>
+                  <div class="stat-value red">${depYear}</div>
                   <div class="stat-label">Money Runs Out</div>
               </div>`;
           })();
@@ -767,7 +744,7 @@ function compute() {
     `;
 }
 
-['savingsRate', 'retireAge', 'returnRate', 'preTaxRate', 'retTaxRate', 'ssStartAge'].forEach(id => $(id).addEventListener('input', compute));
+['annualSavings', 'retireAge', 'returnRate', 'retTaxRate', 'ssStartAge'].forEach(id => $(id).addEventListener('input', compute));
 window.addEventListener('resize', updateBoxPositions);
 
 // Clicking a box brings it in front of the other
