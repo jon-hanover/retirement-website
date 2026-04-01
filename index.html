@@ -719,7 +719,7 @@ function compute() {
 
     // Summary stats
     const retireNW      = data[Math.min(retireYear - START_YEAR, data.length - 1)]?.y ?? 0;
-    const yearsOfWealth = depletedYear ? depletedYear - retireYear : '∞';
+    const yearsOfWealth = depYear ? depYear - retireYear : '∞';
 
     const fmt = v => {
         const neg = v < 0, a = Math.abs(v);
