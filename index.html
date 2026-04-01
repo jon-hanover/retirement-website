@@ -265,7 +265,8 @@
             border-radius: 3px;
             pointer-events: none;
         }
-        #postReturn, #preReturn {
+        #postReturn, #preReturn,
+        #retTaxRate, #preTaxRate {
             position: absolute;
             left: 0; top: 0;
             width: 100%; height: 100%;
@@ -274,7 +275,9 @@
             margin: 0;
         }
         #postReturn::-webkit-slider-thumb,
-        #preReturn::-webkit-slider-thumb  { pointer-events: auto; }
+        #preReturn::-webkit-slider-thumb,
+        #retTaxRate::-webkit-slider-thumb,
+        #preTaxRate::-webkit-slider-thumb  { pointer-events: auto; }
 
         /* De-emphasized parenthetical text in labels */
         .label-paren {
@@ -336,7 +339,7 @@
             <label>Annual Return <span class="label-paren">(net of inflation)</span></label>
             <div class="dual-slider-wrap">
                 <div class="dual-side">
-                    <div class="dual-side-label">Post Retirement</div>
+                    <div class="dual-side-label">After Retirement</div>
                     <div class="dual-side-val" id="postReturnVal">2.0%</div>
                 </div>
                 <div class="dual-track-container">
@@ -346,7 +349,7 @@
                     <input type="range" id="preReturn"  min="0" max="6" value="3" step="0.5">
                 </div>
                 <div class="dual-side right">
-                    <div class="dual-side-label">Pre Retirement</div>
+                    <div class="dual-side-label">Before Retirement</div>
                     <div class="dual-side-val" id="preReturnVal">3.0%</div>
                 </div>
             </div>
@@ -383,21 +386,28 @@
     <!-- Configurable Assumptions -->
     <div class="assumptions" style="margin-top:20px;">
         <div class="assump-title">Configurable Assumptions</div>
+        <div class="controls" style="margin-top:12px; margin-bottom:0; grid-template-columns: 1fr;">
+            <div class="control-group">
+                <label>Effective Tax Rate <span class="label-paren">(blended)</span></label>
+                <div class="dual-slider-wrap">
+                    <div class="dual-side">
+                        <div class="dual-side-label">After Retirement</div>
+                        <div class="dual-side-val" id="retTaxRateVal">15%</div>
+                    </div>
+                    <div class="dual-track-container">
+                        <div class="dual-track-bg"></div>
+                        <div class="dual-track-fill" id="taxDualFill"></div>
+                        <input type="range" id="retTaxRate"  min="5"  max="50" value="15" step="1">
+                        <input type="range" id="preTaxRate"  min="5"  max="50" value="25" step="1">
+                    </div>
+                    <div class="dual-side right">
+                        <div class="dual-side-label">Before Retirement</div>
+                        <div class="dual-side-val" id="preTaxRateVal">25%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="controls" style="margin-top:12px; margin-bottom:0; grid-template-columns: repeat(2, 1fr);">
-            <div class="control-group">
-                <label for="preTaxRate">Effective Tax Rate Pre-Retirement</label>
-                <div class="slider-wrap">
-                    <input type="range" id="preTaxRate" min="15" max="50" value="25" step="1">
-                    <span class="slider-value" id="preTaxRateVal">37%</span>
-                </div>
-            </div>
-            <div class="control-group">
-                <label for="retTaxRate">Effective Tax Rate in Retirement</label>
-                <div class="slider-wrap">
-                    <input type="range" id="retTaxRate" min="5" max="35" value="15" step="1">
-                    <span class="slider-value" id="retTaxRateVal">18%</span>
-                </div>
-            </div>
             <div class="control-group">
                 <label for="ssStartAge">Social Security Start Age <span class="label-paren">(average)</span></label>
                 <div class="slider-wrap">
@@ -678,9 +688,8 @@ function compute() {
     const fmtK = v => v >= 1000 ? '$' + (v / 1000).toFixed(0) + 'K' : '$' + v;
     $('annualSavingsVal').textContent = fmtK(annualSavings);
     updateDualSlider();
+    updateTaxSlider();
     $('retireAgeVal').textContent     = retireAge;
-    $('preTaxRateVal').textContent    = $('preTaxRate').value + '%';
-    $('retTaxRateVal').textContent    = $('retTaxRate').value + '%';
     $('ssStartAgeVal').textContent    = ssStartAge;
 
     // Build projection
@@ -832,7 +841,31 @@ $('preReturn').addEventListener('input', () => {
     compute();
 });
 
-['annualSavings', 'retireAge', 'preTaxRate', 'retTaxRate', 'ssStartAge'].forEach(id => $(id).addEventListener('input', compute));
+// ── Dual tax slider ───────────────────────────────────────────────────────────
+function updateTaxSlider() {
+    const min = 5, max = 50;
+    const retVal = parseInt($('retTaxRate').value);
+    const preVal = parseInt($('preTaxRate').value);
+    const l = (retVal - min) / (max - min) * 100;
+    const r = (preVal - min) / (max - min) * 100;
+    $('taxDualFill').style.left  = l + '%';
+    $('taxDualFill').style.width = (r - l) + '%';
+    $('retTaxRateVal').textContent = retVal + '%';
+    $('preTaxRateVal').textContent = preVal + '%';
+}
+
+$('retTaxRate').addEventListener('input', () => {
+    if (parseInt($('retTaxRate').value) > parseInt($('preTaxRate').value))
+        $('retTaxRate').value = $('preTaxRate').value;
+    compute();
+});
+$('preTaxRate').addEventListener('input', () => {
+    if (parseInt($('preTaxRate').value) < parseInt($('retTaxRate').value))
+        $('preTaxRate').value = $('retTaxRate').value;
+    compute();
+});
+
+['annualSavings', 'retireAge', 'ssStartAge'].forEach(id => $(id).addEventListener('input', compute));
 window.addEventListener('resize', updateBoxPositions);
 
 // Clicking a box brings it in front of the other
