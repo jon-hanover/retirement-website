@@ -223,6 +223,59 @@
         .amber { color: #fbbf24; }
         .red   { color: #f87171; }
 
+        /* ── Dual-handle return slider ───────────────────────────── */
+        .dual-slider-wrap {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .dual-side { min-width: 84px; }
+        .dual-side.right { text-align: right; }
+        .dual-side-label {
+            font-size: 0.68rem;
+            font-weight: 400;
+            color: #9a8fc2;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            margin-bottom: 2px;
+        }
+        .dual-side-val {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #fff;
+        }
+        .dual-track-container {
+            flex: 1;
+            position: relative;
+            height: 22px;
+        }
+        .dual-track-bg {
+            position: absolute;
+            left: 0; right: 0;
+            top: 50%; transform: translateY(-50%);
+            height: 6px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 3px;
+        }
+        .dual-track-fill {
+            position: absolute;
+            top: 50%; transform: translateY(-50%);
+            height: 6px;
+            background: linear-gradient(90deg, #00d2ff, #7b2ff7);
+            border-radius: 3px;
+            pointer-events: none;
+        }
+        #postReturn, #preReturn {
+            position: absolute;
+            left: 0; top: 0;
+            width: 100%; height: 100%;
+            background: transparent;
+            pointer-events: none;
+            margin: 0;
+        }
+        #postReturn::-webkit-slider-thumb,
+        #preReturn::-webkit-slider-thumb  { pointer-events: auto; }
+
         /* De-emphasized parenthetical text in labels */
         .label-paren {
             font-size: 0.70rem;
@@ -276,10 +329,22 @@
             </div>
         </div>
         <div class="control-group">
-            <label for="returnRate">Annual Return <span class="label-paren">(net of inflation)</span></label>
-            <div class="slider-wrap">
-                <input type="range" id="returnRate" min="0" max="10" value="2.5" step="0.5">
-                <span class="slider-value" id="returnRateVal">2.5%</span>
+            <label>Annual Return <span class="label-paren">(net of inflation)</span></label>
+            <div class="dual-slider-wrap">
+                <div class="dual-side">
+                    <div class="dual-side-label">Post Retirement</div>
+                    <div class="dual-side-val" id="postReturnVal">2.0%</div>
+                </div>
+                <div class="dual-track-container">
+                    <div class="dual-track-bg"></div>
+                    <div class="dual-track-fill" id="dualFill"></div>
+                    <input type="range" id="postReturn" min="0" max="10" value="2" step="0.5">
+                    <input type="range" id="preReturn"  min="0" max="10" value="4" step="0.5">
+                </div>
+                <div class="dual-side right">
+                    <div class="dual-side-label">Pre Retirement</div>
+                    <div class="dual-side-val" id="preReturnVal">4.0%</div>
+                </div>
             </div>
         </div>
     </div>
@@ -318,14 +383,14 @@
             <div class="control-group">
                 <label for="preTaxRate">Effective Tax Rate Pre-Retirement</label>
                 <div class="slider-wrap">
-                    <input type="range" id="preTaxRate" min="15" max="50" value="37" step="1">
+                    <input type="range" id="preTaxRate" min="15" max="50" value="25" step="1">
                     <span class="slider-value" id="preTaxRateVal">37%</span>
                 </div>
             </div>
             <div class="control-group">
                 <label for="retTaxRate">Effective Tax Rate in Retirement</label>
                 <div class="slider-wrap">
-                    <input type="range" id="retTaxRate" min="5" max="35" value="18" step="1">
+                    <input type="range" id="retTaxRate" min="5" max="35" value="15" step="1">
                     <span class="slider-value" id="retTaxRateVal">18%</span>
                 </div>
             </div>
@@ -338,7 +403,7 @@
             </div>
             <div class="control-group">
                 <label for="ssBenefit">Annual Social Security Income <span class="label-paren">(combined, in today's $)</span></label>
-                <input type="text" id="ssBenefit" value="40,000">
+                <input type="text" id="ssBenefit" value="60,000">
             </div>
         </div>
     </div>
@@ -347,10 +412,10 @@
     <div class="assumptions">
         <div class="assump-title">Notes</div>
         <ul>
-            <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. The annual return slider is a real (inflation-adjusted) return — inflation is assumed to be zero in the model because both portfolio values and spending figures are expressed in constant purchasing power.</li>
-            <li><strong>Pre-retirement taxes:</strong> Annual savings contributions are post-tax and deposited at their full stated amount. Portfolio gains during pre-retirement are subject to a 37% (configurable) effective tax rate, reducing the net return on the growing portfolio. Set this rate as a weighted average across your accounts — gains in tax-advantaged accounts (401k, IRA) are not taxed annually while gains in taxable brokerage accounts are; calibrate accordingly.</li>
-            <li><strong>Taxes in retirement:</strong> An 18% (configurable) effective rate is applied to all retirement income — both Social Security and portfolio withdrawals. This blended rate should reflect your mix of fully taxable income (traditional IRA/401k draws), partially taxable income (Social Security), and tax-free income (Roth). Annual spending in retirement is your desired net after-tax amount; the model grosses up withdrawals accordingly so that amount is actually achieved.</li>
-            <li><strong>Social Security:</strong> $40,000/year (configurable) combined benefit in today's dollars, beginning at average age 70 (configurable). Income is modeled as a single combined cash flow starting when Jon and Grace's average age reaches the configured start age — a simplification that introduces a timing approximation of roughly 1–2 years relative to modeling each spouse separately. After SS starts, after-tax SS income reduces the required portfolio withdrawal for the year.</li>
+            <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. Returns are real (inflation-adjusted) — inflation is assumed to be zero because both portfolio values and spending are expressed in constant purchasing power. Defaults to 4% (configurable) pre-retirement and 2% (configurable) post-retirement.</li>
+            <li><strong>Pre-retirement taxes:</strong> Annual savings contributions are post-tax and deposited at their full stated amount. Portfolio gains during pre-retirement are subject to a 25% (configurable) effective tax rate, reducing the net return on the growing portfolio. Set this rate as a weighted average across your accounts — gains in tax-advantaged accounts (401k, IRA) are not taxed annually while gains in taxable brokerage accounts are; calibrate accordingly.</li>
+            <li><strong>Taxes in retirement:</strong> A 15% (configurable) effective rate is applied to all retirement income — both Social Security and portfolio withdrawals. This blended rate should reflect your mix of fully taxable income (traditional IRA/401k draws), partially taxable income (Social Security), and tax-free income (Roth). Annual spending in retirement is your desired net after-tax amount; the model grosses up withdrawals accordingly so that amount is actually achieved.</li>
+            <li><strong>Social Security:</strong> $60,000/year (configurable) combined benefit in today's dollars, beginning at average age 70 (configurable). Income is modeled as a single combined cash flow starting when Jon and Grace's average age reaches the configured start age — a simplification that introduces a timing approximation of roughly 1–2 years relative to modeling each spouse separately. After SS starts, after-tax SS income reduces the required portfolio withdrawal for the year.</li>
             <li><strong>Cash flow timing:</strong> Half-year convention — savings deposits and retirement withdrawals are assumed to occur mid-year, earning half a year of investment returns. This produces more accurate results than assuming all flows happen at year-start or year-end.</li>
         </ul>
     </div>
@@ -582,10 +647,11 @@ function updateBoxPositions() {
 
 // ── Compute & render ──────────────────────────────────────────────────────────
 function compute() {
-    const netWorth0    = parseNum($('netWorth').value);
+    const netWorth0     = parseNum($('netWorth').value);
     const annualSavings = parseInt($('annualSavings').value);
-    const returnPct    = parseFloat($('returnRate').value) / 100;
-    const retireAge    = parseInt($('retireAge').value);
+    const preReturnPct  = parseFloat($('preReturn').value) / 100;
+    const postReturnPct = parseFloat($('postReturn').value) / 100;
+    const retireAge     = parseInt($('retireAge').value);
     const retireSpend  = parseNum($('retirementSpending').value);
     const retireYear   = ageToYear(retireAge);
 
@@ -597,17 +663,17 @@ function compute() {
     const ssBenefit   = parseNum($('ssBenefit').value);
 
 
-    // Pre-retirement: tax rate reduces effective return on the portfolio
-    const preRetireReturn = returnPct * (1 - preTaxRate);
+    // Pre-retirement: after-tax return on portfolio gains
+    const preRetireReturn = preReturnPct * (1 - preTaxRate);
     const sqrtPreR = Math.pow(1 + preRetireReturn, 0.5);
 
-    // Half-year convention: cash flows at mid-year earn √(1+r) return
-    const sqrtR = Math.pow(1 + returnPct, 0.5);
+    // Post-retirement: full return (no additional tax reduction — retTaxRate handles withdrawals)
+    const sqrtR = Math.pow(1 + postReturnPct, 0.5);
 
     // Slider labels
     const fmtK = v => v >= 1000 ? '$' + (v / 1000).toFixed(0) + 'K' : '$' + v;
     $('annualSavingsVal').textContent = fmtK(annualSavings);
-    $('returnRateVal').textContent    = parseFloat($('returnRate').value).toFixed(1) + '%';
+    updateDualSlider();
     $('retireAgeVal').textContent     = retireAge;
     $('preTaxRateVal').textContent    = $('preTaxRate').value + '%';
     $('retTaxRateVal').textContent    = $('retTaxRate').value + '%';
@@ -635,7 +701,7 @@ function compute() {
                                   : 0;
             const netFromPort   = Math.max(0, retireSpend - ssAfterTax);
             const grossFromPort = netFromPort / (1 - retTaxRate);
-            nw = nw * (1 + returnPct) - grossFromPort * sqrtR;
+            nw = nw * (1 + postReturnPct) - grossFromPort * sqrtR;
         }
     }
 
@@ -650,7 +716,7 @@ function compute() {
                                   : 0;
             const netFromPort   = Math.max(0, retireSpend - ssAfterTax);
             const grossFromPort = netFromPort / (1 - retTaxRate);
-            extNW = extNW * (1 + returnPct) - grossFromPort * sqrtR;
+            extNW = extNW * (1 + postReturnPct) - grossFromPort * sqrtR;
         }
     }
 
@@ -738,7 +804,31 @@ function compute() {
     `;
 }
 
-['annualSavings', 'retireAge', 'returnRate', 'preTaxRate', 'retTaxRate', 'ssStartAge'].forEach(id => $(id).addEventListener('input', compute));
+// ── Dual return slider ────────────────────────────────────────────────────────
+function updateDualSlider() {
+    const min = 0, max = 10;
+    const postVal = parseFloat($('postReturn').value);
+    const preVal  = parseFloat($('preReturn').value);
+    const l = (postVal - min) / (max - min) * 100;
+    const r = (preVal  - min) / (max - min) * 100;
+    $('dualFill').style.left  = l + '%';
+    $('dualFill').style.width = (r - l) + '%';
+    $('postReturnVal').textContent = postVal.toFixed(1) + '%';
+    $('preReturnVal').textContent  = preVal.toFixed(1) + '%';
+}
+
+$('postReturn').addEventListener('input', () => {
+    if (parseFloat($('postReturn').value) > parseFloat($('preReturn').value))
+        $('postReturn').value = $('preReturn').value;
+    compute();
+});
+$('preReturn').addEventListener('input', () => {
+    if (parseFloat($('preReturn').value) < parseFloat($('postReturn').value))
+        $('preReturn').value = $('postReturn').value;
+    compute();
+});
+
+['annualSavings', 'retireAge', 'preTaxRate', 'retTaxRate', 'ssStartAge'].forEach(id => $(id).addEventListener('input', compute));
 window.addEventListener('resize', updateBoxPositions);
 
 // Clicking a box brings it in front of the other
