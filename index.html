@@ -339,11 +339,11 @@
                     <div class="dual-track-bg"></div>
                     <div class="dual-track-fill" id="dualFill"></div>
                     <input type="range" id="postReturn" min="0" max="10" value="2" step="0.5">
-                    <input type="range" id="preReturn"  min="0" max="10" value="4" step="0.5">
+                    <input type="range" id="preReturn"  min="0" max="10" value="3" step="0.5">
                 </div>
                 <div class="dual-side right">
                     <div class="dual-side-label">Pre Retirement</div>
-                    <div class="dual-side-val" id="preReturnVal">4.0%</div>
+                    <div class="dual-side-val" id="preReturnVal">3.0%</div>
                 </div>
             </div>
         </div>
@@ -412,7 +412,7 @@
     <div class="assumptions">
         <div class="assump-title">Notes</div>
         <ul>
-            <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. Returns are real (inflation-adjusted) — inflation is assumed to be zero because both portfolio values and spending are expressed in constant purchasing power. Defaults to 4% (configurable) pre-retirement and 2% (configurable) post-retirement.</li>
+            <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. Returns are real (inflation-adjusted) — inflation is assumed to be zero because both portfolio values and spending are expressed in constant purchasing power. Defaults to 3% (configurable) pre-retirement and 2% (configurable) post-retirement.</li>
             <li><strong>Pre-retirement taxes:</strong> Annual savings contributions are post-tax and deposited at their full stated amount. Portfolio gains during pre-retirement are subject to a 25% (configurable) effective tax rate, reducing the net return on the growing portfolio. Set this rate as a weighted average across your accounts — gains in tax-advantaged accounts (401k, IRA) are not taxed annually while gains in taxable brokerage accounts are; calibrate accordingly.</li>
             <li><strong>Taxes in retirement:</strong> A 15% (configurable) effective rate is applied to all retirement income — both Social Security and portfolio withdrawals. This blended rate should reflect your mix of fully taxable income (traditional IRA/401k draws), partially taxable income (Social Security), and tax-free income (Roth). Annual spending in retirement is your desired net after-tax amount; the model grosses up withdrawals accordingly so that amount is actually achieved.</li>
             <li><strong>Social Security:</strong> $60,000/year (configurable) combined benefit in today's dollars, beginning at average age 70 (configurable). Income is modeled as a single combined cash flow starting when Jon and Grace's average age reaches the configured start age — a simplification that introduces a timing approximation of roughly 1–2 years relative to modeling each spouse separately. After SS starts, after-tax SS income reduces the required portfolio withdrawal for the year.</li>
