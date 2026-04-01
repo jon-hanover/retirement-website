@@ -262,7 +262,7 @@
     <!-- Row 2: Sliders -->
     <div class="controls" style="margin-bottom: 28px;">
         <div class="control-group">
-            <label for="annualSavings">Annual Retirement Savings <span class="label-paren">(pre-tax)</span></label>
+            <label for="annualSavings">Annual Retirement Savings</label>
             <div class="slider-wrap">
                 <input type="range" id="annualSavings" min="0" max="40000" value="20000" step="1000">
                 <span class="slider-value" id="annualSavingsVal">$20K</span>
@@ -607,8 +607,6 @@ function compute() {
     const ssStartYear = ageToYear(ssStartAge);
     const ssBenefit   = parseNum($('ssBenefit').value);
 
-    // Pre-tax savings → after-tax amount actually invested each year
-    const effectiveSavings = annualSavings * (1 - preTaxRate);
 
     // Half-year convention: cash flows at mid-year earn √(1+r) return
     const sqrtR = Math.pow(1 + returnPct, 0.5);
@@ -638,7 +636,7 @@ function compute() {
 
         if (y < retireYear) {
             // Working year: portfolio grows full year; savings deposited mid-year
-            nw = nw * (1 + returnPct) + effectiveSavings * sqrtR;
+            nw = nw * (1 + returnPct) + annualSavings * sqrtR;
         } else {
             // Retirement year: gross up portfolio withdrawal to cover taxes,
             // net of any after-tax SS income received from ssStartAge onward.
