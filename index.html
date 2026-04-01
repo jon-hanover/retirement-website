@@ -340,7 +340,7 @@
 
     <!-- Key Assumptions -->
     <div class="assumptions">
-        <div class="assump-title">Key Assumptions</div>
+        <div class="assump-title">Notes</div>
         <ul>
             <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. The annual return slider is a real (inflation-adjusted) return — inflation is assumed to be zero in the model because both portfolio values and spending figures are expressed in constant purchasing power.</li>
             <li><strong>Income taxes (pre-retirement):</strong> <span id="assumpTax">—</span>. The configurable rate overrides bracket-based auto-calculation; reference brackets (federal + ~5% state avg + FICA): ≤$50K → 20%, $50–100K → 26%, $100–200K → 32%, $200–400K → 37%, $400–600K → 40%, &gt;$600K → 43%. Savings rate is applied to after-tax income.</li>
@@ -547,6 +547,12 @@ const chart = new Chart(ctx, {
                 grid:  { color: 'rgba(255,255,255,0.04)' },
             },
             y: {
+                title: {
+                    display: true,
+                    text: 'Net Worth',
+                    color: '#8a80b0',
+                    font: { size: 11 },
+                },
                 ticks: {
                     color: '#8a80b0',
                     callback: v => {
@@ -652,6 +658,21 @@ function compute() {
         }
     }
 
+    // Extended simulation: if no on-chart depletion, project past END_YEAR to find actual year
+    let extDepletedYear = null;
+    if (!depletedYear) {
+        let extNW = nw; // nw after applying END_YEAR's growth formula = value entering 2091
+        for (let y = END_YEAR + 1; y <= 2300; y++) {
+            if (extNW <= 0) { extDepletedYear = y; break; }
+            const ssAfterTax    = (y >= SS_START_YEAR)
+                                  ? SS_BENEFIT * (1 - SS_TAXABLE_FRACTION * RET_TAX_RATE)
+                                  : 0;
+            const netFromPort   = Math.max(0, retireSpend - ssAfterTax);
+            const grossFromPort = netFromPort / (1 - PORT_TAXABLE_FRAC * RET_TAX_RATE);
+            extNW = extNW * (1 + returnPct) - grossFromPort * sqrtR;
+        }
+    }
+
     // Precise zero-crossing for dashed line alignment
     let depletedYearPrecise = null;
     if (depletedYear !== null && depletedYear > START_YEAR) {
@@ -709,6 +730,21 @@ function compute() {
         return neg ? '-' + s : s;
     };
 
+    // Out-of-scope depletion KPI: only show when Money Out is beyond chart range
+    const outOfScopeKPI = !depletedYear ? (() => {
+        if (!extDepletedYear) {
+            return `<div class="stat">
+                <div class="stat-value green">Never</div>
+                <div class="stat-label">Projected Depletion Year</div>
+            </div>`;
+        }
+        const da = ages(extDepletedYear);
+        return `<div class="stat">
+            <div class="stat-value red">${extDepletedYear} <span style="font-size:1rem;font-weight:400;color:#9a8fc2">avg ${da.avg}</span></div>
+            <div class="stat-label">Projected Depletion Year (beyond chart)</div>
+        </div>`;
+    })() : '';
+
     $('summary').innerHTML = `
         <div class="stat">
             <div class="stat-value blue">${fmt(retireNW)}</div>
@@ -718,6 +754,7 @@ function compute() {
             <div class="stat-value amber">${yearsOfWealth === '∞' ? '∞' : yearsOfWealth + ' yrs'}</div>
             <div class="stat-label">Years of Retirement Funded</div>
         </div>
+        ${outOfScopeKPI}
     `;
 }
 
