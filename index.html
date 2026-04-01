@@ -262,7 +262,7 @@
     <!-- Row 2: Sliders -->
     <div class="controls" style="margin-bottom: 28px;">
         <div class="control-group">
-            <label for="annualSavings">Annual Retirement Savings <span class="label-paren">(pre-tax, $/yr)</span></label>
+            <label for="annualSavings">Annual Retirement Savings <span class="label-paren">(pre-tax)</span></label>
             <div class="slider-wrap">
                 <input type="range" id="annualSavings" min="0" max="40000" value="20000" step="1000">
                 <span class="slider-value" id="annualSavingsVal">$20K</span>
@@ -615,9 +615,7 @@ function compute() {
 
     // Slider labels
     const fmtK = v => v >= 1000 ? '$' + (v / 1000).toFixed(0) + 'K' : '$' + v;
-    $('annualSavingsVal').innerHTML =
-        fmtK(annualSavings) +
-        '<span class="sub">' + fmtK(Math.round(effectiveSavings)) + ' after tax</span>';
+    $('annualSavingsVal').textContent = fmtK(annualSavings);
     $('returnRateVal').textContent    = parseFloat($('returnRate').value).toFixed(1) + '%';
     $('retireAgeVal').textContent     = retireAge;
     $('preTaxRateVal').textContent    = $('preTaxRate').value + '%';
@@ -718,6 +716,7 @@ function compute() {
     updateBoxPositions();
 
     // Summary stats
+    const depYear       = depletedYear || extDepletedYear;
     const retireNW      = data[Math.min(retireYear - START_YEAR, data.length - 1)]?.y ?? 0;
     const yearsOfWealth = depYear ? depYear - retireYear : '∞';
 
@@ -730,7 +729,6 @@ function compute() {
     };
 
     // Money Runs Out KPI — always visible
-    const depYear = depletedYear || extDepletedYear;
     const moneyOutKPI = !depYear
         ? `<div class="stat">
                <div class="stat-value green">Never</div>
