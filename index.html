@@ -664,11 +664,11 @@ function compute() {
         let extNW = nw; // nw after applying END_YEAR's growth formula = value entering 2091
         for (let y = END_YEAR + 1; y <= 2300; y++) {
             if (extNW <= 0) { extDepletedYear = y; break; }
-            const ssAfterTax    = (y >= SS_START_YEAR)
-                                  ? SS_BENEFIT * (1 - SS_TAXABLE_FRACTION * RET_TAX_RATE)
+            const ssAfterTax    = (y >= ssStartYear)
+                                  ? ssBenefit * (1 - SS_TAXABLE_FRACTION * retTaxRate)
                                   : 0;
             const netFromPort   = Math.max(0, retireSpend - ssAfterTax);
-            const grossFromPort = netFromPort / (1 - PORT_TAXABLE_FRAC * RET_TAX_RATE);
+            const grossFromPort = netFromPort / (1 - PORT_TAXABLE_FRAC * retTaxRate);
             extNW = extNW * (1 + returnPct) - grossFromPort * sqrtR;
         }
     }
