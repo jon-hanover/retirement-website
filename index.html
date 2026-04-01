@@ -262,7 +262,7 @@
     <!-- Row 2: Sliders -->
     <div class="controls" style="margin-bottom: 28px;">
         <div class="control-group">
-            <label for="annualSavings">Annual Retirement Savings <span class="label-paren">($/yr)</span></label>
+            <label for="annualSavings">Annual Retirement Savings <span class="label-paren">(pre-tax, $/yr)</span></label>
             <div class="slider-wrap">
                 <input type="range" id="annualSavings" min="0" max="40000" value="20000" step="1000">
                 <span class="slider-value" id="annualSavingsVal">$20K</span>
@@ -314,7 +314,7 @@
     <!-- Configurable Assumptions -->
     <div class="assumptions" style="margin-top:20px;">
         <div class="assump-title">Configurable Assumptions</div>
-        <div class="controls" style="margin-top:12px; margin-bottom:0;">
+        <div class="controls" style="margin-top:12px; margin-bottom:0; grid-template-columns: repeat(2, 1fr);">
             <div class="control-group">
                 <label for="preTaxRate">Effective Tax Rate Pre-Retirement</label>
                 <div class="slider-wrap">
@@ -601,19 +601,23 @@ function compute() {
     const retireYear   = ageToYear(retireAge);
 
     // Configurable assumptions
+    const preTaxRate  = parseInt($('preTaxRate').value) / 100;
     const retTaxRate  = parseInt($('retTaxRate').value) / 100;
     const ssStartAge  = parseInt($('ssStartAge').value);
     const ssStartYear = ageToYear(ssStartAge);
     const ssBenefit   = parseNum($('ssBenefit').value);
 
+    // Pre-tax savings → after-tax amount actually invested each year
+    const effectiveSavings = annualSavings * (1 - preTaxRate);
+
     // Half-year convention: cash flows at mid-year earn √(1+r) return
     const sqrtR = Math.pow(1 + returnPct, 0.5);
 
     // Slider labels
-    const savingsK = annualSavings >= 1000
-        ? '$' + (annualSavings / 1000).toFixed(0) + 'K'
-        : '$' + annualSavings;
-    $('annualSavingsVal').textContent = savingsK;
+    const fmtK = v => v >= 1000 ? '$' + (v / 1000).toFixed(0) + 'K' : '$' + v;
+    $('annualSavingsVal').innerHTML =
+        fmtK(annualSavings) +
+        '<span class="sub">' + fmtK(Math.round(effectiveSavings)) + ' after tax</span>';
     $('returnRateVal').textContent    = parseFloat($('returnRate').value).toFixed(1) + '%';
     $('retireAgeVal').textContent     = retireAge;
     $('preTaxRateVal').textContent    = $('preTaxRate').value + '%';
@@ -636,7 +640,7 @@ function compute() {
 
         if (y < retireYear) {
             // Working year: portfolio grows full year; savings deposited mid-year
-            nw = nw * (1 + returnPct) + annualSavings * sqrtR;
+            nw = nw * (1 + returnPct) + effectiveSavings * sqrtR;
         } else {
             // Retirement year: gross up portfolio withdrawal to cover taxes,
             // net of any after-tax SS income received from ssStartAge onward.
