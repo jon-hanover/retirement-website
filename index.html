@@ -13,14 +13,14 @@
             background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
             color: #e0e0e0;
             min-height: 100vh;
-            padding: 24px;
+            padding: 16px 24px;
         }
 
         h1 {
             text-align: center;
-            font-size: 2rem;
+            font-size: 1.4rem;
             font-weight: 700;
-            margin-bottom: 6px;
+            margin-bottom: 3px;
             background: linear-gradient(90deg, #00d2ff, #7b2ff7);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -28,9 +28,9 @@
 
         .subtitle {
             text-align: center;
-            font-size: 0.95rem;
+            font-size: 0.85rem;
             color: #9a8fc2;
-            margin-bottom: 22px;
+            margin-bottom: 14px;
         }
 
         .container { max-width: 1000px; margin: 0 auto; }
@@ -38,37 +38,37 @@
         .controls {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 18px;
-            margin-bottom: 18px;
+            gap: 12px;
+            margin-bottom: 12px;
         }
 
         .control-group {
             background: rgba(255,255,255,0.06);
             border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 14px;
-            padding: 18px 20px;
+            border-radius: 12px;
+            padding: 12px 16px;
             transition: border-color 0.2s;
         }
         .control-group:hover { border-color: rgba(123,47,247,0.4); }
 
         label {
             display: block;
-            font-size: 0.82rem;
+            font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             color: #b0a8d0;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
 
         input[type="text"] {
             width: 100%;
-            padding: 10px 14px;
+            padding: 7px 12px;
             border: 1px solid rgba(255,255,255,0.15);
             border-radius: 10px;
             background: rgba(0,0,0,0.3);
             color: #fff;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-family: inherit;
             outline: none;
             transition: border-color 0.2s;
@@ -313,7 +313,7 @@
     </div>
 
     <!-- Row 2: Savings & Retirement Age sliders -->
-    <div class="controls" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 18px;">
+    <div class="controls" style="grid-template-columns: repeat(2, 1fr); margin-bottom: 12px;">
         <div class="control-group">
             <label for="annualSavings">Annual Retirement Savings</label>
             <div class="slider-wrap">
@@ -331,7 +331,7 @@
     </div>
 
     <!-- Row 3: Annual Return dual slider (full width) -->
-    <div class="controls" style="grid-template-columns: 1fr; margin-bottom: 28px;">
+    <div class="controls" style="grid-template-columns: 1fr; margin-bottom: 18px;">
         <div class="control-group">
             <label>Annual Return <span class="label-paren">(net of inflation)</span></label>
             <div class="dual-slider-wrap">
@@ -342,8 +342,8 @@
                 <div class="dual-track-container">
                     <div class="dual-track-bg"></div>
                     <div class="dual-track-fill" id="dualFill"></div>
-                    <input type="range" id="postReturn" min="0" max="10" value="2" step="0.5">
-                    <input type="range" id="preReturn"  min="0" max="10" value="3" step="0.5">
+                    <input type="range" id="postReturn" min="0" max="6" value="2" step="0.5">
+                    <input type="range" id="preReturn"  min="0" max="6" value="3" step="0.5">
                 </div>
                 <div class="dual-side right">
                     <div class="dual-side-label">Pre Retirement</div>
@@ -810,7 +810,7 @@ function compute() {
 
 // ── Dual return slider ────────────────────────────────────────────────────────
 function updateDualSlider() {
-    const min = 0, max = 10;
+    const min = 0, max = 6;
     const postVal = parseFloat($('postReturn').value);
     const preVal  = parseFloat($('preReturn').value);
     const l = (postVal - min) / (max - min) * 100;
