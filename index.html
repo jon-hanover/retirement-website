@@ -223,6 +223,15 @@
         .amber { color: #fbbf24; }
         .red   { color: #f87171; }
 
+        /* De-emphasized parenthetical text in labels */
+        .label-paren {
+            font-size: 0.70rem;
+            font-weight: 400;
+            text-transform: none;
+            letter-spacing: 0;
+            color: #6b6490;
+        }
+
         @media (max-width: 700px) {
             body { padding: 14px; }
             h1 { font-size: 1.4rem; }
@@ -264,14 +273,14 @@
             </div>
         </div>
         <div class="control-group">
-            <label for="retireAge">Retirement Age</label>
+            <label for="retireAge">Retirement Age <span class="label-paren">(average)</span></label>
             <div class="slider-wrap">
                 <input type="range" id="retireAge" min="45" max="80" value="65" step="1">
-                <span class="slider-value" id="retireAgeVal">65<span class="sub" id="retireYearHint">(ave.)</span></span>
+                <span class="slider-value" id="retireAgeVal">65</span>
             </div>
         </div>
         <div class="control-group">
-            <label for="returnRate">Annual Return, Net of Inflation</label>
+            <label for="returnRate">Annual Return <span class="label-paren">(net of inflation)</span></label>
             <div class="slider-wrap">
                 <input type="range" id="returnRate" min="0" max="10" value="2.5" step="0.5">
                 <span class="slider-value" id="returnRateVal">2.5%</span>
@@ -730,20 +739,20 @@ function compute() {
         return neg ? '-' + s : s;
     };
 
-    // Out-of-scope depletion KPI: only show when Money Out is beyond chart range
-    const outOfScopeKPI = !depletedYear ? (() => {
-        if (!extDepletedYear) {
-            return `<div class="stat">
-                <div class="stat-value green">Never</div>
-                <div class="stat-label">Projected Depletion Year</div>
-            </div>`;
-        }
-        const da = ages(extDepletedYear);
-        return `<div class="stat">
-            <div class="stat-value red">${extDepletedYear} <span style="font-size:1rem;font-weight:400;color:#9a8fc2">avg ${da.avg}</span></div>
-            <div class="stat-label">Projected Depletion Year (beyond chart)</div>
-        </div>`;
-    })() : '';
+    // Money Runs Out KPI — always visible
+    const depYear = depletedYear || extDepletedYear;
+    const moneyOutKPI = !depYear
+        ? `<div class="stat">
+               <div class="stat-value green">Never</div>
+               <div class="stat-label">Money Runs Out</div>
+           </div>`
+        : (() => {
+              const da = ages(depYear);
+              return `<div class="stat">
+                  <div class="stat-value red">${depYear} <span style="font-size:0.85rem;font-weight:400;color:#9a8fc2">ave age ${da.avg}</span></div>
+                  <div class="stat-label">Money Runs Out</div>
+              </div>`;
+          })();
 
     $('summary').innerHTML = `
         <div class="stat">
@@ -754,7 +763,7 @@ function compute() {
             <div class="stat-value amber">${yearsOfWealth === '∞' ? '∞' : yearsOfWealth + ' yrs'}</div>
             <div class="stat-label">Years of Retirement Funded</div>
         </div>
-        ${outOfScopeKPI}
+        ${moneyOutKPI}
     `;
 }
 
