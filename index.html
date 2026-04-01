@@ -343,13 +343,14 @@
         </div>
     </div>
 
-    <!-- Key Assumptions -->
+    <!-- Notes -->
     <div class="assumptions">
         <div class="assump-title">Notes</div>
         <ul>
             <li><strong>Returns &amp; dollars:</strong> All values are in today's dollars. The annual return slider is a real (inflation-adjusted) return — inflation is assumed to be zero in the model because both portfolio values and spending figures are expressed in constant purchasing power.</li>
-            <li><strong>Taxes in retirement:</strong> <span id="assumpRetTax">An 18% effective rate</span> is applied to all retirement income — both Social Security and portfolio withdrawals. This blended rate should reflect the mix of fully taxable income (traditional IRA/401k draws), partially taxable income (Social Security), and tax-free income (Roth). The retirement spending input is your desired net after-tax spending; the model grosses up withdrawals accordingly so that amount is actually achieved.</li>
-            <li><strong>Social Security:</strong> <span id="assumpSS">$40,000/year combined benefit in today's dollars, beginning at average age 67 (year 2055)</span> — the full retirement age for Jon (b. 1986) and Grace (b. 1989). No SS income assumed before the configured start age regardless of retirement date. After SS starts, after-tax SS income reduces the required portfolio withdrawal for the year.</li>
+            <li><strong>Pre-retirement taxes:</strong> Annual savings contributions are post-tax and deposited at their full stated amount. Portfolio gains during pre-retirement are subject to a 37% (configurable) effective tax rate, reducing the net return on the growing portfolio. Set this rate as a weighted average across your accounts — gains in tax-advantaged accounts (401k, IRA) are not taxed annually while gains in taxable brokerage accounts are; calibrate accordingly.</li>
+            <li><strong>Taxes in retirement:</strong> An 18% (configurable) effective rate is applied to all retirement income — both Social Security and portfolio withdrawals. This blended rate should reflect your mix of fully taxable income (traditional IRA/401k draws), partially taxable income (Social Security), and tax-free income (Roth). Annual spending in retirement is your desired net after-tax amount; the model grosses up withdrawals accordingly so that amount is actually achieved.</li>
+            <li><strong>Social Security:</strong> $40,000/year (configurable) combined benefit in today's dollars, beginning at average age 70 (configurable). Income is modeled as a single combined cash flow starting when Jon and Grace's average age reaches the configured start age — a simplification that introduces a timing approximation of roughly 1–2 years relative to modeling each spouse separately. After SS starts, after-tax SS income reduces the required portfolio withdrawal for the year.</li>
             <li><strong>Cash flow timing:</strong> Half-year convention — savings deposits and retirement withdrawals are assumed to occur mid-year, earning half a year of investment returns. This produces more accurate results than assuming all flows happen at year-start or year-end.</li>
         </ul>
     </div>
@@ -376,15 +377,6 @@ function ages(year) {
 
 function ageToYear(age) { return Math.round(START_YEAR + age - 38.5); }
 
-// ── Progressive effective tax rate (conservative: federal + ~5% state + FICA) ─
-function effectiveTaxRate(income) {
-    if (income <= 50000)  return 0.20;
-    if (income <= 100000) return 0.26;
-    if (income <= 200000) return 0.32;
-    if (income <= 400000) return 0.37;
-    if (income <= 600000) return 0.40;
-    return 0.43;
-}
 
 // ── Number formatting ─────────────────────────────────────────────────────────
 function parseNum(s)  { return parseFloat(String(s).replace(/,/g, '')) || 0; }
@@ -620,11 +612,6 @@ function compute() {
     $('preTaxRateVal').textContent    = $('preTaxRate').value + '%';
     $('retTaxRateVal').textContent    = $('retTaxRate').value + '%';
     $('ssStartAgeVal').textContent    = ssStartAge;
-
-    // Dynamic assumption notes
-    $('assumpRetTax').textContent = `A ${$('retTaxRate').value}% effective rate`;
-    $('assumpSS').textContent =
-        `$${formatNum(ssBenefit)}/year combined benefit in today's dollars, beginning at average age ${ssStartAge} (year ${ssStartYear})`;
 
     // Build projection
     const data = [];
