@@ -247,18 +247,11 @@
     <h1>Retirement Planning</h1>
     <p class="subtitle">for Grace and Jon</p>
 
-    <!-- Row 1: Inputs -->
-    <div class="controls">
+    <!-- Row 1: Numeric inputs -->
+    <div class="controls" style="grid-template-columns: repeat(2, 1fr);">
         <div class="control-group">
             <label for="netWorth">Current Net Worth <span class="label-paren">($)</span></label>
             <input type="text" id="netWorth" value="2,000,000">
-        </div>
-        <div class="control-group">
-            <label for="annualSavings">Annual Retirement Savings <span class="label-paren">($/yr)</span></label>
-            <div class="slider-wrap">
-                <input type="range" id="annualSavings" min="0" max="40000" value="20000" step="1000">
-                <span class="slider-value" id="annualSavingsVal">$20K</span>
-            </div>
         </div>
         <div class="control-group">
             <label for="retirementSpending">Annual Spending in Retirement <span class="label-paren">($)</span></label>
@@ -267,9 +260,16 @@
     </div>
 
     <!-- Row 2: Sliders -->
-    <div class="controls" style="margin-bottom: 28px; grid-template-columns: repeat(2, 1fr);">
+    <div class="controls" style="margin-bottom: 28px;">
         <div class="control-group">
-            <label for="retireAge">Retirement Age <span class="label-paren">(average)</span></label>
+            <label for="annualSavings">Annual Retirement Savings <span class="label-paren">($/yr)</span></label>
+            <div class="slider-wrap">
+                <input type="range" id="annualSavings" min="0" max="40000" value="20000" step="1000">
+                <span class="slider-value" id="annualSavingsVal">$20K</span>
+            </div>
+        </div>
+        <div class="control-group">
+            <label for="retireAge">Retirement Age <span class="label-paren">(G&amp;J average)</span></label>
             <div class="slider-wrap">
                 <input type="range" id="retireAge" min="45" max="80" value="65" step="1">
                 <span class="slider-value" id="retireAgeVal">65</span>
@@ -315,6 +315,13 @@
     <div class="assumptions" style="margin-top:20px;">
         <div class="assump-title">Configurable Assumptions</div>
         <div class="controls" style="margin-top:12px; margin-bottom:0;">
+            <div class="control-group">
+                <label for="preTaxRate">Effective Tax Rate Pre-Retirement</label>
+                <div class="slider-wrap">
+                    <input type="range" id="preTaxRate" min="15" max="50" value="37" step="1">
+                    <span class="slider-value" id="preTaxRateVal">37%</span>
+                </div>
+            </div>
             <div class="control-group">
                 <label for="retTaxRate">Effective Tax Rate in Retirement</label>
                 <div class="slider-wrap">
@@ -609,6 +616,7 @@ function compute() {
     $('annualSavingsVal').textContent = savingsK;
     $('returnRateVal').textContent    = parseFloat($('returnRate').value).toFixed(1) + '%';
     $('retireAgeVal').textContent     = retireAge;
+    $('preTaxRateVal').textContent    = $('preTaxRate').value + '%';
     $('retTaxRateVal').textContent    = $('retTaxRate').value + '%';
     $('ssStartAgeVal').textContent    = ssStartAge;
 
@@ -744,7 +752,7 @@ function compute() {
     `;
 }
 
-['annualSavings', 'retireAge', 'returnRate', 'retTaxRate', 'ssStartAge'].forEach(id => $(id).addEventListener('input', compute));
+['annualSavings', 'retireAge', 'returnRate', 'preTaxRate', 'retTaxRate', 'ssStartAge'].forEach(id => $(id).addEventListener('input', compute));
 window.addEventListener('resize', updateBoxPositions);
 
 // Clicking a box brings it in front of the other
